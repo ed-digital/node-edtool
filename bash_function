@@ -1,0 +1,16 @@
+function ed() {
+  export CLICOLOR=1
+  arg1=$1
+  arg2=$2
+  if [ "$arg1" == "go" ]
+  then
+    targetPath=`_ed get-target-path $arg2`
+    cd ${targetPath}
+#  elif [ "$arg1" == "p" ]
+#  then
+#    targetPath=`_ed get-project-path $arg2`
+#    cd ${targetPath}
+  else
+    _ed $@
+  fi
+}

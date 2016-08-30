@@ -15,7 +15,7 @@ module.exports = (cmd, rootDir, callback) => {
     stdoutBuffer += chunk.toString();
   });
   proc.stderr.on('data', (chunk) => {
-    process.stderr.write(chunk);
+    process.stdout.write(chunk);
     stderrBuffer += chunk.toString();
   });
   proc.on('exit', (code) => {
@@ -26,11 +26,12 @@ module.exports = (cmd, rootDir, callback) => {
 module.exports.sync = (cmd, rootDir) => {
   let parts = splitArgs(cmd);
   let proc = child_process.spawnSync(parts[0], parts.slice(1), {
-    cwd: rootDir
+    cwd: rootDir,
+    stdio: [null, null, process.stdout]
   });
   return {
     code: proc.status,
     stdout: proc.stdout.toString(),
-    stderr: proc.stderr.toString()
+    stderr: ""
   };
 };

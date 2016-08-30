@@ -25,8 +25,17 @@ module.exports.getSiteRoot = function(dir) {
 module.exports.getThemeName = function(root) {
   let result = wpcli(root).runCommandSync('option get template');
   if(result.code) {
-    console.log(result);
-    throw new Error("Unable to determine current theme");
+    console.log("Unable to determine current theme");
+    process.exit();
+  }
+  return result.stdout.trim();
+};
+
+module.exports.getOption = function(root, name) {
+  let result = wpcli(root).runCommandSync('option get '+name);
+  if(result.code) {
+    console.log("Unable to determine current theme");
+    process.exit();
   }
   return result.stdout.trim();
 };

@@ -8,20 +8,20 @@ const C = require('chalk');
 
 module.exports = {
   getFilePath() {
-    return path.join(os.homedir(), '/.edword/conf.json');
+    return path.join(os.homedir(), '/.ed/conf.json');
   },
   // Returns the path to the config json, even if it doesn't exist
   getProjectConfPath(name) {
     if(!name.match(/^[A-Z0-9\-\_]+$/i)) {
       throw new Error("Invalid project name. Alpha-numberic characters, dashes and underscores only.");
     }
-    return path.join(os.homedir(), '/.edword/projects/'+name+'.json');
+    return path.join(os.homedir(), '/.ed/projects/'+name+'.json');
   },
   // Retrieve project configuration, or null if no project exists
   getProjectConf(name) {
     let confFile = this.getProjectConfPath(name);
     try {
-      return fse.readJsonSync(confFile);
+      return fse.readJSONSync(confFile);
     } catch(err) {
       if(err.code === 'ENOENT') {
         // File doesn't exist. That's ok
@@ -30,6 +30,22 @@ module.exports = {
         throw err;
       }
     }
+  },
+  getProjects() {
+    let projectsDirectory = path.join(os.homedir(), '/.ed/projects');
+    fse.ensureDirSync(projectsDirectory);
+    let projects = fs.readdirSync(projectsDirectory);
+    projects = projects.filter(x => x.indexOf('.json') > 0).map(x => {
+      let projectName = x.replace(/\.json/, '');
+      return this.getProjectConf(projectName);
+    });
+    return projects;
+  },
+  setProjectConf(name, options) {
+    let confFile = this.getProjectConfPath(name);
+    options.projectName = name;
+    fse.ensureDirSync(path.dirname(confFile));
+    fse.writeJSONSync(confFile, options);
   },
   getConfig() {
     let file = this.getFilePath();

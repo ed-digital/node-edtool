@@ -101,7 +101,7 @@ class Compiler extends EventEmitter {
 					this.addError('less', `Failed to compile ${file}`, err.message);
 					
 				})
-				.pipe(gulp.dest('./build/css'))
+				.pipe(gulp.dest('./assets-build/css'))
 				.on('end', () => {
 					console.log(chalk.cyan(">> Finished compiling "+file));
 					this.changed();
@@ -128,9 +128,15 @@ class Compiler extends EventEmitter {
 	}
 	
 	compileJS(watch) {
-		var bundler = watchify(browserify(this.assetPath+'/js/index.js', { debug: false }).transform(babelify.configure({
-			presets: ['es2015']
-		})));
+    
+    let plugin = require('babel-plugin-import-glob');
+    
+		var bundler = watchify(browserify(this.assetPath+'/js/index.js', { debug: false })
+      .transform(babelify.configure({
+  			presets: ['es2015'],
+        plugins: [require('babel-plugin-import-glob').default]
+  		}))
+    );
 
 		const rebundle = () => {
 			console.log(chalk.yellow(">> Compiling JS"));
@@ -151,17 +157,18 @@ class Compiler extends EventEmitter {
 					loadMaps: true
 				}))
 				.pipe(sourcemaps.write('./'))
-				.pipe(gulp.dest('./build/js'));
+				.pipe(gulp.dest(path.join(this.themePath, '/assets-build/js')));
 		};
+    
+    bundler.on('time', (time) => {
+      console.log(chalk.cyan(">> JS compilation completed in "+time+"ms"));
+      this.changed();
+    });
 
 		if(watch) {
 			bundler.on('update', () => {
 				console.log(chalk.magenta("------- Detected changes in JS -------"));
 				rebundle();
-			});
-			bundler.on('time', (time) => {
-				console.log(chalk.cyan(">> JS compilation completed in "+time+"ms"));
-				this.changed();
 			});
 		}
 
