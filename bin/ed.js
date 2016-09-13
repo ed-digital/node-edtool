@@ -12,7 +12,7 @@ const printf = require('printf');
 
 const commands = {
   "create": {
-    description: "Create a new WordPress installation, with ED. defaults, in interactive mode.",
+    description: "Create a new WordPress installation, with ED. defaults, \nin interactive mode.",
     usage: ["create <folder>"],
     run: (argv) => {
       if(argv._.length === 0) {
@@ -45,7 +45,7 @@ const commands = {
     }
   },
   "go": {
-    description: "Jump to a project, or to the current projects theme folder.",
+    description: "Jump to a project, or to the current projects theme\nfolder.",
     usage: ["go", "go <projectName>"],
     run: (argv) => {
       console.log("If you are seeing this, you are missing some code in your .bashrc file.\nType: "+C.yellow("ed bash-setup")+" to install the relevant function. Be sure to restart your terminal session afterwards.");
@@ -78,14 +78,14 @@ const commands = {
     }
   },
   "settings": {
-    description: "Interactively set up global configuration for this machine user",
+    description: "Interactively set up global configuration for this user",
     usage: ["settings"],
     run() {
       edwp.globalConfig.interactive();
     }
   },
   "scan": {
-    description: "Recursively scans upwards, looking for a WordPress installation.",
+    description: "Recursively scans upwards, looking for a \nWordPress installation.",
     usage: ["scan"],
     run() {
       const wp = require('../src/wp');
@@ -172,6 +172,7 @@ const commands = {
       
       // Project name provided
       } else if(argv._.length == 1) {
+        
         C.enabled = true;
         if(argv._.length === 0) {
           process.stderr.write("Missing project argument. Usage: "+C.yellow("ed p <projectName>"));
@@ -179,12 +180,17 @@ const commands = {
         }
         let projectName = argv._[0];
         let conf = edwp.globalConfig.getProjectConf(projectName);
+        
         if(conf === null) {
           process.stderr.write(`No project named ${C.cyan(projectName)} defined in ${C.cyan("'~/.ed/projects/'")}.\nYou can fix this by changing into the project directory, and typing ${C.yellow("ed scan")}`);
           process.exit(1);
         } else {
-          let themeName = wp.getThemeName(conf.rootDir);
-          process.stdout.write(path.join(conf.rootDir, 'wp-content/themes', themeName));
+          if(conf.themePath) {
+            process.stdout.write(conf.themePath);
+          } else {
+            let themeName = wp.getThemeName(conf.rootDir);
+            process.stdout.write(path.join(conf.rootDir, 'wp-content/themes', themeName));
+          }
         }
       }
     }
@@ -235,7 +241,12 @@ function showHelp(onlyCommand) {
   for(let name in commands) {
     if(!onlyCommand || name == onlyCommand) {
       if(commands[name].hidden) continue;
-      console.log("\n" + C.cyan(name) + (" ").repeat(leftWidth-name.length) + commands[name].description);
+      let descriptionParts = commands[name].description.split(/\n/g);
+      console.log("\n" + C.cyan(name) + (" ").repeat(leftWidth-name.length) + descriptionParts[0]);
+      for(let k in descriptionParts) {
+        if(k == 0) continue;
+        console.log((" ").repeat(leftWidth) + descriptionParts[k]);
+      }
       if(commands[name].usage) {
         for(let k in commands[name].usage) {
           let item = commands[name].usage[k];

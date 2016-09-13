@@ -148,7 +148,8 @@ function createSite(options, callback) {
     },
     (next) => {
       // Notify the user of admin password
-      console.log(C.green(`\n✔✔✔✔ Completed WP Setup! Below are your login details. Be sure to save them in a safe place.\nSite Title: ${options.title}\nURL: ${options.siteURL}\nUsername: ${options.wpAdmin}\nPassword: ${options.wpPass}`));
+      globalConf.setProjectConf(options.projectName, options);
+      console.log(C.green(`\n✔✔✔✔ Completed WP Setup! Below are your login details. Be sure to save them in a safe place.\n\nProject Name: ${options.projectName}\nSite Title: ${options.title}\nURL: ${options.siteURL}\nUsername: ${options.wpAdmin}\nPassword: ${options.wpPass}`));
       process.exit();
     }
   ]);

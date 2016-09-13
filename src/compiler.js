@@ -1,6 +1,7 @@
 const browserify = require('browserify');
 const babelify = require('babelify');
 const requireGlobify = require('require-globify');
+// const less = require('less');
 const chalk = require('chalk');
 
 const wp = require('./wp');
@@ -15,6 +16,9 @@ const watchify = require('watchify');
 const source = require('vinyl-source-stream');
 const buffer = require('vinyl-buffer');
 const gulp = require('gulp');
+const gulpWatch = require('gulp-watch');
+const less = require('gulp-less');
+const autoprefixer = require('gulp-autoprefixer');
 
 // module.exports = function(workingDir, options) {
 //   
@@ -73,7 +77,7 @@ class Compiler extends EventEmitter {
 	}
 	
 	compile(watch) {
-		// this.compileLESS(watch);
+		this.compileLESS(watch);
 		this.compileJS(watch);
 		// this.compileHTML(watch);
 	}
