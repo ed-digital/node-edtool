@@ -1,9 +1,4 @@
-# ED. Digital's WP Management Tool
-
-This tool is meant to run on your local computer or dev site, rather than a production server.
-It automates the creation of new WordPress sites with our default plugins. It's really only meant for ED. employees, but anyone is free to use it.
-
-It uses our custom plugin and starting point theme.
+This tool automates the creation of new WordPress sites with ED. Digital's default plugins and theme. It's really only meant for ED. developers, but anyone is free to use it.
 
 ## Installation
 
@@ -17,7 +12,7 @@ Prerequisits and assumptions:
 To install, open Terminal and type:
 
 ```
-npm install -g edtool
+npm install -g ed-wp
 ed
 ```
 
