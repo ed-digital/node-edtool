@@ -1,6 +1,6 @@
 {
-  "name": "edwp",
-  "version": "1.0.2",
+  "name": "ed-wp",
+  "version": "1.0.3",
   "description": "",
   "main": "index.js",
   "bin": {
