@@ -56,11 +56,16 @@ const commands = {
     run: (argv) => {
       let bashFile = path.join(os.homedir(), ".bashrc");
       // Grab contents of bash file, ripping out old stuff
-      let contents = fs.readFileSync(bashFile).toString().replace(/#BEGIN_EDWP\n(.|[\s\S])+#END_EDWP/, '');
-      let bashFunc = fs.readFileSync(path.resolve(__dirname, "../bash_function")).toString();
-      contents += `\n#BEGIN_EDWP\n${bashFunc}\n#END_EDWP`;
-      fs.writeFileSync(bashFile, contents);
-      console.log(C.magenta("✔ Updated your ~/.bashrc with some cool stuff."));
+      try {
+        let contents = fs.readFileSync(bashFile).toString().replace(/#BEGIN_EDWP\n(.|[\s\S])+#END_EDWP/, '');
+        let bashFunc = fs.readFileSync(path.resolve(__dirname, "../bash_function")).toString();
+        contents += `\n#BEGIN_EDWP\n${bashFunc}\n#END_EDWP`;
+        fs.writeFileSync(bashFile, contents);
+        console.log(C.magenta("✔ Updated your ~/.bashrc with some cool stuff."));
+      } catch(err) {
+        console.log(C.red("ERROR! Unable to update .bashrc with cool stuff. Try running `ed bash-setup` later on."));
+        console.log(err);
+      }
     }
   },
   "ls": {
