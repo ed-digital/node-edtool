@@ -39,6 +39,12 @@ After answering each question carefully, the tool will begin downloading the req
 
 **Don't forget** to create a new site in MAMP that points to the new folder!
 
+You may still need to make some configuration changes to your new site after logging in:
+
+* Under **Settings &gt; Permalinks** make sure 'Post name' is selected
+* Under **Settings &gt; General**, make sure the title, tagline and timezone is correct
+* Advanced Custom Fields does not activate automatically at this point.
+
 ## Navigation
 
 Once a site has been created, you can jump to that projects theme folder from anywhere, by typing
