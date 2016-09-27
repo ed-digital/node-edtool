@@ -48,22 +48,22 @@ const commands = {
     description: "Jump to a project, or to the current projects theme\nfolder.",
     usage: ["go", "go <projectName>"],
     run: (argv) => {
-      console.log("If you are seeing this, you are missing some code in your .bashrc file.\nType: "+C.yellow("ed bash-setup")+" to install the relevant function. Be sure to restart your terminal session afterwards.");
+      console.log("If you are seeing this, you are missing some code in your .bash_profile file.\nType: "+C.yellow("ed bash-setup")+" to install the relevant function. Be sure to restart your terminal session afterwards.");
     }
   },
   "bash-setup": {
     hidden: true,
     run: (argv) => {
-      let bashFile = path.join(os.homedir(), ".bashrc");
+      let bashFile = path.join(os.homedir(), ".bash_profile");
       // Grab contents of bash file, ripping out old stuff
       try {
         let contents = fs.readFileSync(bashFile).toString().replace(/#BEGIN_EDWP\n(.|[\s\S])+#END_EDWP/, '');
         let bashFunc = fs.readFileSync(path.resolve(__dirname, "../bash_function")).toString();
         contents += `\n#BEGIN_EDWP\n${bashFunc}\n#END_EDWP`;
         fs.writeFileSync(bashFile, contents);
-        console.log(C.magenta("✔ Updated your ~/.bashrc with some cool stuff."));
+        console.log(C.magenta("✔ Updated your ~/.bash_profile with some cool stuff."));
       } catch(err) {
-        console.log(C.red("ERROR! Unable to update .bashrc with cool stuff. Try running `ed bash-setup` later on."));
+        console.log(C.red("ERROR! Unable to update .bash_profile with cool stuff. Try running `ed bash-setup` later on."));
         console.log(err);
       }
     }
@@ -249,7 +249,7 @@ function showHelp(onlyCommand) {
       let descriptionParts = commands[name].description.split(/\n/g);
       console.log("\n" + C.cyan(name) + (" ").repeat(leftWidth-name.length) + descriptionParts[0]);
       for(let k in descriptionParts) {
-        if(k == 0) continue;
+        if(k*1 === 0) continue;
         console.log((" ").repeat(leftWidth) + descriptionParts[k]);
       }
       if(commands[name].usage) {

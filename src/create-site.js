@@ -89,7 +89,7 @@ function createSite(options, callback) {
     (next) => {
       // Now install
       console.log(C.cyan("Installing..."));
-      wp.runCommand(`core install --url=${options.siteURL} --title="${options.title}" --admin_user=${escape(options.wpAdmin)} --admin_password=${escape(options.wpPass)} --admin_email=${escape(options.wpEmail)}`, function(code, out, err) {
+      wp.runCommand(['core', 'install', `--url=${options.siteURL}`, `--title=${options.title}`, `--admin_user=${escape(options.wpAdmin)}`, `--admin_password=${escape(options.wpPass)}`,`--admin_email=${escape(options.wpEmail)}`], function(code, out, err) {
         if(code === 0) {
           console.log(C.green("✔ Installation Complete"));
           next();
@@ -102,7 +102,9 @@ function createSite(options, callback) {
       // Set up theme
       console.log(C.cyan(`Initializing blank theme to ${options.themePath}...`));
       async.series([
+        // Create theme folder
         next => fse.ensureDir(options.themePath, next),
+        // Download latest theme
         next => exec(`curl http://ed-wp-plugin.ed.com.au/release/ed-blank-theme-latest.zip -O`, options.themePath, (code) => {
           if(code === 0) {
             next();
@@ -110,6 +112,7 @@ function createSite(options, callback) {
             console.log(C.red(":( Failed to download blank ED. theme."));
           }
         }),
+        // Unzip it
         next => exec(`unzip ed-blank-theme-latest.zip`, options.themePath, (code) => {
           if(code === 0) {
             next();
@@ -117,19 +120,39 @@ function createSite(options, callback) {
             console.log(C.red(":( Failed to extract ZIP"));
           }
         }),
+        // Replace theme name within style.css
         next => {
           let themeMetaPath = path.join(options.themePath, 'style.css');
           let themeMetaContents = fs.readFileSync(themeMetaPath).toString().replace('Your Theme Name', options.title);
           fs.writeFileSync(themeMetaPath, themeMetaContents);
           next();
         },
+        // Replace theme name within package.json
+        next => {
+          let themeMetaPath = path.join(options.themePath, 'package.json');
+          let themeMetaContents = fs.readFileSync(themeMetaPath).toString().replace('an-ed-website', options.themeName+"-theme");
+          fs.writeFileSync(themeMetaPath, themeMetaContents);
+          next();
+        },
+        // Activate the theme
         next => wp.runCommand(`theme activate ${options.themeName} --skip-packages --skip-themes --skip-plugins`, (code) => {
           if(code === 0) {
             next();
           } else {
             console.log(C.red(":( Failed to activate theme"));
           }
-        })
+        }),
+        // Delete zip file
+        next => fs.unlink(path.join(options.themePath, 'ed-blank-theme-latest.zip'), next),
+        // NPM Install
+        next => exec(`npm install`, options.themePath, (code) => {
+          if(code === 0) {
+            next();
+          } else {
+            console.log(C.red(":( Failed to run `npm install`. You may need to do this manually, later."));
+            next();
+          }
+        }),
       ], next);
     },
     (next) => {
@@ -150,6 +173,9 @@ function createSite(options, callback) {
       // Notify the user of admin password
       globalConf.setProjectConf(options.projectName, options);
       console.log(C.green(`\n✔✔✔✔ Completed WP Setup! Below are your login details. Be sure to save them in a safe place.\n\nProject Name: ${options.projectName}\nSite Title: ${options.title}\nURL: ${options.siteURL}\nUsername: ${options.wpAdmin}\nPassword: ${options.wpPass}`));
+      console.log(C.green(`✔ Now type: ed go ${options.projectName}`));
+      console.log(C.green(`            npm install`));
+      console.log(C.green(`            ed build --watch`));
       process.exit();
     }
   ]);

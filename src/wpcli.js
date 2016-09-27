@@ -6,11 +6,21 @@ module.exports = function(rootDir) {
 
   return {
     runCommand(cmdStr, callback) {
-      let fullCommand = `php ${pharLoc} ${cmdStr}`;
+      let fullCommand;
+      if(Array.isArray(cmdStr)) {
+        fullCommand = ['php', pharLoc].concat(cmdStr);
+      } else {
+        fullCommand = `php ${pharLoc} ${cmdStr}`;
+      }
       exec(fullCommand, rootDir, callback);
     },
     runCommandSync(cmdStr) {
-      let fullCommand = `php ${pharLoc} ${cmdStr}`;
+      let fullCommand;
+      if(Array.isArray(cmdStr)) {
+        fullCommand = ['php', pharLoc].concat(cmdStr);
+      } else {
+        fullCommand = `php ${pharLoc} ${cmdStr}`;
+      }
       let result = {};
       return exec.sync(fullCommand, rootDir, null);
     }

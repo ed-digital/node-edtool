@@ -3,8 +3,8 @@ const splitArgs = require('string-argv');
 const chalk = require('chalk');
 
 module.exports = (cmd, rootDir, callback) => {
-  console.log(chalk.magenta("> Running Command > " + cmd));
-  let parts = splitArgs(cmd);
+  console.log(chalk.magenta("> Running Command > " + (Array.isArray(cmd) ? cmd.join(' ') : cmd)));
+  let parts = Array.isArray(cmd) ? cmd : splitArgs(cmd);
   let proc = child_process.spawn(parts[0], parts.slice(1), {
     cwd: rootDir
   });
@@ -24,7 +24,7 @@ module.exports = (cmd, rootDir, callback) => {
 };
 
 module.exports.sync = (cmd, rootDir) => {
-  let parts = splitArgs(cmd);
+  let parts = Array.isArray(cmd) ? cmd : splitArgs(cmd);
   let proc = child_process.spawnSync(parts[0], parts.slice(1), {
     cwd: rootDir,
     stdio: [null, null, process.stdout]

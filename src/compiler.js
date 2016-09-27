@@ -32,7 +32,7 @@ const autoprefixer = require('gulp-autoprefixer');
 //       presets: ["es2015"]
 //     }))
 //     .bundle()
-//     .pipe(fs.createWriteStream(path.join(themePath, 'assets/js/bundle.js')));4
+//     .pipe(fs.createWriteStream(path.join(themePath, 'client/js/bundle.js')));4
 //   
 // };
 
@@ -41,8 +41,14 @@ class Compiler extends EventEmitter {
 	constructor(workingDir) {
 		super();
     
-    this.siteRoot = wp.getSiteRoot(workingDir);
-    this.themeName = wp.getThemeName(this.siteRoot);
+    let pathMatch = process.cwd().match(/wp\-content\/themes\/([A-Z0-9\_\-\.]+)[\/]?$/i);
+    if(pathMatch) {
+      this.themeName = pathMatch[1];
+      this.siteRoot = process.cwd().replace(pathMatch[0], '');
+    } else {
+      this.siteRoot = wp.getSiteRoot(workingDir);
+      this.themeName = wp.getThemeName(this.siteRoot);
+    }
     this.themePath = path.join(this.siteRoot, 'wp-content/themes', this.themeName);
     this.assetPath = path.join(this.themePath, 'assets-src');
 		
@@ -105,7 +111,7 @@ class Compiler extends EventEmitter {
 					this.addError('less', `Failed to compile ${file}`, err.message);
 					
 				})
-				.pipe(gulp.dest('./assets-build/css'))
+				.pipe(gulp.dest('./assets-built/css'))
 				.on('end', () => {
 					console.log(chalk.cyan(">> Finished compiling "+file));
 					this.changed();
@@ -137,7 +143,7 @@ class Compiler extends EventEmitter {
     
 		var bundler = watchify(browserify(this.assetPath+'/js/index.js', { debug: false })
       .transform(babelify.configure({
-  			presets: ['es2015'],
+  			presets: [require('babel-preset-es2015')],
         plugins: [require('babel-plugin-import-glob').default]
   		}))
     );
@@ -161,7 +167,7 @@ class Compiler extends EventEmitter {
 					loadMaps: true
 				}))
 				.pipe(sourcemaps.write('./'))
-				.pipe(gulp.dest(path.join(this.themePath, '/assets-build/js')));
+				.pipe(gulp.dest(path.join(this.themePath, '/assets-built/js')));
 		};
     
     bundler.on('time', (time) => {
