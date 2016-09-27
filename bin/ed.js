@@ -187,7 +187,7 @@ const commands = {
         let conf = edwp.globalConfig.getProjectConf(projectName);
         
         if(conf === null) {
-          process.stderr.write(`No project named ${C.cyan(projectName)} defined in ${C.cyan("'~/.ed/projects/'")}.\nYou can fix this by changing into the project directory, and typing ${C.yellow("ed scan")}`);
+          process.stderr.write(`No project named ${C.cyan(projectName)} defined in ${C.cyan("'~/.ed/projects/'")}.\nYou can fix this by changing into the project directory, and typing ${C.yellow("ed scan")}\n`);
           process.exit(1);
         } else {
           if(conf.themePath) {
