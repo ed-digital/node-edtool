@@ -39,7 +39,7 @@ const commands = {
       } else {
         // Start build
         const Compiler = require('../src/compiler');
-        let compiler = new Compiler(process.cwd());
+        let compiler = new Compiler(process.cwd(), argv.force || argv.f);
         compiler.compile(argv.watch || argv.w);
       }
     }
@@ -48,24 +48,28 @@ const commands = {
     description: "Jump to a project, or to the current projects theme\nfolder.",
     usage: ["go", "go <projectName>"],
     run: (argv) => {
-      console.log("If you are seeing this, you are missing some code in your .bash_profile file.\nType: "+C.yellow("ed bash-setup")+" to install the relevant function. Be sure to restart your terminal session afterwards.");
+      console.log("If you are seeing this, you are missing some code in your .profile file.\nType: "+C.yellow("ed shell-setup")+" to install the relevant function. Be sure to restart your terminal session afterwards.");
     }
   },
-  "bash-setup": {
+  "shell-setup": {
     hidden: true,
     run: (argv) => {
-      let bashFile = path.join(os.homedir(), ".bash_profile");
-      // Grab contents of bash file, ripping out old stuff
-      try {
-        let contents = fs.readFileSync(bashFile).toString().replace(/#BEGIN_EDWP\n(.|[\s\S])+#END_EDWP/, '');
-        let bashFunc = fs.readFileSync(path.resolve(__dirname, "../bash_function")).toString();
-        contents += `\n#BEGIN_EDWP\n${bashFunc}\n#END_EDWP`;
-        fs.writeFileSync(bashFile, contents);
-        console.log(C.magenta("✔ Updated your ~/.bash_profile with some cool stuff."));
-      } catch(err) {
-        console.log(C.red("ERROR! Unable to update .bash_profile with cool stuff. Try running `ed bash-setup` later on."));
-        console.log(err);
+      let files = ['.zshrc', '.bash_profile', '.profile'];
+      for(let fileName of files) {
+        let shellFile = path.join(os.homedir(), fileName);
+        // Grab contents of shell file, ripping out old stuff
+        try {
+          let contents = fs.readFileSync(shellFile).toString().replace(/#BEGIN_EDWP\n(.|[\s\S])+#END_EDWP/, '');
+          let shellFunc = fs.readFileSync(path.resolve(__dirname, "../shell_function")).toString();
+          contents += `\n#BEGIN_EDWP\n${shellFunc}\n#END_EDWP`;
+          fs.writeFileSync(shellFile, contents);
+          console.log(C.magenta("✔ Updated your ~/.profile with some cool stuff."));
+          return;
+        } catch(err) {
+          
+        }
       }
+      console.log(C.red("ERROR! Unable to find/update any shell profile files (eg. "+files.join(', ')+") while attempting to add cool stuff. Try running `ed shell-setup` later on."));
     }
   },
   "ls": {
@@ -102,7 +106,7 @@ const commands = {
         console.log(err.message);
         process.exit(1);
       }
-      
+
       // Try to grab the project name from the website root directory
       let projectName = "";
       let configAlreadyExists = false;
@@ -117,18 +121,18 @@ const commands = {
           }
         }
       } catch(err) { }
-            
+
       conf.siteURL = wp.getOption(process.cwd(), "home");
       conf.title = wp.getOption(process.cwd(), "blogname");
       conf.themeName = wp.getThemeName(process.cwd());
       conf.projectName = projectName;
-      
+
       console.log(C.cyan("Site URL: ") + conf.siteURL);
       console.log(C.cyan("Root Directory: ") + conf.rootDir);
       console.log(C.cyan("Active Theme: ") + conf.themeName);
-      
+
       if(!conf.projectName) {
-        
+
         let wiz = new Wizard();
         wiz.getText("Enter a unique project name", conf.projectName, (value) => {
           if(!value) return false;
@@ -137,7 +141,7 @@ const commands = {
           }
           conf.projectName = value;
         });
-        
+
         wiz.begin(() => {
           // Save project name to the project itself
           console.log("Saving project preferences...");
@@ -145,13 +149,13 @@ const commands = {
           edwp.globalConfig.setProjectConf(conf.projectName, conf);
           console.log(C.green("Done!"));
         });
-        
+
       } else {
-        
+
         edwp.globalConfig.setProjectConf(conf.projectName, conf);
-        
+
       }
-      
+
     }
   },
   "get-target-path": {
@@ -159,10 +163,10 @@ const commands = {
     run(argv) {
       C.enabled = true;
       const wp = require('../src/wp');
-      
+
       // No project name provided, so try find theme path of current project, if there is one
       if(argv._.length === 0) {
-        
+
         let rootDir, themeName;
         try {
           rootDir = wp.getSiteRoot(process.cwd());
@@ -171,13 +175,13 @@ const commands = {
           process.stderr.write(C.red(err.message));
           process.exit(1);
         }
-        
+
         process.stdout.write(path.join(rootDir, 'wp-content/themes', themeName));
         process.exit();
-      
+
       // Project name provided
       } else if(argv._.length == 1) {
-        
+
         C.enabled = true;
         if(argv._.length === 0) {
           process.stderr.write("Missing project argument. Usage: "+C.yellow("ed p <projectName>"));
@@ -185,7 +189,7 @@ const commands = {
         }
         let projectName = argv._[0];
         let conf = edwp.globalConfig.getProjectConf(projectName);
-        
+
         if(conf === null) {
           process.stderr.write(`No project named ${C.cyan(projectName)} defined in ${C.cyan("'~/.ed/projects/'")}.\nYou can fix this by changing into the project directory, and typing ${C.yellow("ed scan")}\n`);
           process.exit(1);
@@ -222,9 +226,9 @@ const commands = {
     hidden: true,
     run() {
       C.enabled = true;
-      
+
       const wp = require('../src/wp');
-      
+
       let rootDir, themeName;
       try {
         rootDir = wp.getSiteRoot(process.cwd());
@@ -233,7 +237,7 @@ const commands = {
         process.stderr.write(C.red(err.message));
         process.exit(1);
       }
-      
+
       process.stdout.write(path.join(rootDir, 'wp-content/themes', themeName));
       process.exit();
     }
@@ -242,7 +246,7 @@ const commands = {
 
 function showHelp(onlyCommand) {
   let leftWidth = 20;
-  
+
   for(let name in commands) {
     if(!onlyCommand || name == onlyCommand) {
       if(commands[name].hidden) continue;
@@ -260,33 +264,33 @@ function showHelp(onlyCommand) {
       }
     }
   }
-  
+
 }
 
 const argv = require('minimist')(process.argv.slice(2));
 
 if(argv._.length === 0) {
-  
+
   // Showing help
   let title = "ED. WordPress Tool!";
   console.log(C.red("-".repeat(80) + "\n" + " ".repeat(80/2-title.length/2) + title + "\n" + "-".repeat(80)));
   console.log("Below is a list of available commands:");
   showHelp();
   process.exit();
-  
+
 } else {
-  
+
   // Attempting to run the given command
   let commandName = argv._[0];
   argv._ = argv._.slice(1);
-  
+
   if(!commands[commandName]) {
     // Command unknown...
     console.log(C.bgRed(C.black(`Oooooops! I don't know the command '${commandName}'...`)));
     process.exit();
   }
-  
+
   // Call the function
   commands[commandName].run(argv);
-  
+
 }

@@ -21,11 +21,11 @@ const less = require('gulp-less');
 const autoprefixer = require('gulp-autoprefixer');
 
 // module.exports = function(workingDir, options) {
-//   
+//
 //   let siteRoot = wp.getSiteRoot(workingDir);
 //   let themeName = wp.getThemeName(siteRoot);
 //   let themePath = path.join(siteRoot, 'wp-content/themes', themeName);
-//   
+//
 //   var b = browserify(path.join(themePath, 'assets-src/js/index.js'))
 //     .transform(requireGlobify)
 //     .transform(babelify.configure({
@@ -33,33 +33,42 @@ const autoprefixer = require('gulp-autoprefixer');
 //     }))
 //     .bundle()
 //     .pipe(fs.createWriteStream(path.join(themePath, 'client/js/bundle.js')));4
-//   
+//
 // };
 
 class Compiler extends EventEmitter {
-	
-	constructor(workingDir) {
+
+	constructor(workingDir, skipWordpress) {
 		super();
-    
-    let pathMatch = process.cwd().match(/wp\-content\/themes\/([A-Z0-9\_\-\.]+)[\/]?$/i);
-    if(pathMatch) {
-      this.themeName = pathMatch[1];
-      this.siteRoot = process.cwd().replace(pathMatch[0], '');
-    } else {
-      this.siteRoot = wp.getSiteRoot(workingDir);
-      this.themeName = wp.getThemeName(this.siteRoot);
-    }
-    this.themePath = path.join(this.siteRoot, 'wp-content/themes', this.themeName);
-    this.assetPath = path.join(this.themePath, 'assets-src');
-		
+
+		this.skipWordpress = skipWordpress || false;
+
+		if(skipWordpress) {
+			this.siteRoot = process.cwd();
+			this.themeName = "";
+			this.themePath = process.cwd();
+			this.assetPath = process.cwd();
+		} else {
+	    let pathMatch = process.cwd().match(/wp\-content\/themes\/([A-Z0-9\_\-\.]+)[\/]?$/i);
+	    if(pathMatch) {
+	      this.themeName = pathMatch[1];
+	      this.siteRoot = process.cwd().replace(pathMatch[0], '');
+	    } else {
+	      this.siteRoot = wp.getSiteRoot(workingDir);
+	      this.themeName = wp.getThemeName(this.siteRoot);
+	    }
+	    this.themePath = path.join(this.siteRoot, 'wp-content/themes', this.themeName);
+	    this.assetPath = path.join(this.themePath, 'assets-src');
+		}
+
 		this.errors = {};
-    
+
 	}
-	
+
 	clearErrors(type) {
 		this.errors[type] = null;
 	}
-	
+
 	addError(type, title, msg) {
 		if(!this.errors[type]) this.errors[type] = [];
 		let err = {
@@ -71,7 +80,7 @@ class Compiler extends EventEmitter {
 		this.emit('compileError', err);
 		this.changed();
 	}
-	
+
 	getErrors() {
 		let errs = [];
 		for(let key in this.errors) {
@@ -81,67 +90,69 @@ class Compiler extends EventEmitter {
 		}
 		return errs;
 	}
-	
+
 	compile(watch) {
-		this.compileLESS(watch);
+		if(!this.skipWordpress) {
+			this.compileLESS(watch);
+		}
 		this.compileJS(watch);
 		// this.compileHTML(watch);
 	}
-	
+
 	watch() {
 		return this.compile(true);
 	}
-	
+
 	compileLESS(watch) {
-		
+
 		console.log(chalk.yellow(">> Compiling LESS"));
-		
+
 		let files = ['screen.less', 'print.less'];
-		
+
 		let compile = (file) => {
-			
+
 			gulp.src(this.assetPath+'/less/'+file)
 				.pipe(less())
 				.pipe(autoprefixer())
 				.on('error', (err) => {
-					
+
 					console.log(chalk.black(chalk.bgRed(">> LESS Compiler Error")));
 					console.log(err.message);
-					
+
 					this.addError('less', `Failed to compile ${file}`, err.message);
-					
+
 				})
 				.pipe(gulp.dest('./assets-built/css'))
 				.on('end', () => {
 					console.log(chalk.cyan(">> Finished compiling "+file));
 					this.changed();
 				});
-			
+
 		};
-		
+
 		let compileAll = () => {
 			this.clearErrors('less');
 			for(let file of files) {
 				compile(file);
 			}
 		};
-		
+
 		if(watch) {
 			gulpWatch(this.assetPath+'/less/**/*', () => {
 				console.log(chalk.magenta("------- Detected changes in LESS -------"));
 				compileAll();
 			});
 		}
-		
+
 		compileAll();
-		
+
 	}
-	
+
 	compileJS(watch) {
-    
+
     let plugin = require('babel-plugin-import-glob');
-    
-		var bundler = watchify(browserify(this.assetPath+'/js/index.js', { debug: false })
+
+		var bundler = watchify(browserify(this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js', { debug: false })
       .transform(babelify.configure({
   			presets: [require('babel-preset-es2015')],
         plugins: [require('babel-plugin-import-glob').default]
@@ -151,15 +162,15 @@ class Compiler extends EventEmitter {
 		const rebundle = () => {
 			console.log(chalk.yellow(">> Compiling JS"));
 			this.clearErrors('js');
-			
+
 			bundler.bundle()
 				.on('error', (err) => {
-					
+
 					console.log(chalk.black(chalk.bgRed(">> JS Compiler Error")));
 					console.log(err.message + (err.codeFrame ? "\n"+err.codeFrame : ""));
-					
+
 					this.addError('js', `Failed to compile JS`, err.message + (err.codeFrame ? "\n"+err.codeFrame : ""));
-					
+
 				})
 				.pipe(source('bundle.js'))
 				.pipe(buffer())
@@ -169,7 +180,7 @@ class Compiler extends EventEmitter {
 				.pipe(sourcemaps.write('./'))
 				.pipe(gulp.dest(path.join(this.themePath, '/assets-built/js')));
 		};
-    
+
     bundler.on('time', (time) => {
       console.log(chalk.cyan(">> JS compilation completed in "+time+"ms"));
       this.changed();
@@ -184,14 +195,14 @@ class Compiler extends EventEmitter {
 
 		rebundle();
 	}
-	
+
 	changed() {
 		clearTimeout(this._changeDebounce);
 		this._changeDebounce = setTimeout(() => {
 			this.emit('changed');
 		}, 300);
 	}
-	
+
 }
 
 module.exports = Compiler;
