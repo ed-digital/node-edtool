@@ -39,5 +39,8 @@
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.7.0"
   },
-  "repository": "ed-digital/node-edtool"
+  "repository": "ed-digital/node-edtool",
+  "devDependencies": {
+    "gulp-sass": "^2.3.2"
+  }
 }
