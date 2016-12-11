@@ -1,6 +1,6 @@
 {
   "name": "edwp",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "ED. Digital's WP Tool",
   "main": "index.js",
   "bin": {
