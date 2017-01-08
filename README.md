@@ -61,3 +61,18 @@ ed scan
 ```
 
 It'll ask you for a project name, and then you're all sorted ;) All it does is create an entry in `~/.ed/projects/`
+
+
+## Development
+
+Clone this project to your local machine and if you've installed node-edtool from npm, uninstall it now.
+```
+npm uninstall -g ed-wp
+```
+
+Make your changes locally then test by running:
+
+```
+npm install
+npm link
+```
