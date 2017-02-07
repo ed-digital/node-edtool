@@ -56,7 +56,7 @@ function createSite(options, callback) {
     (next) => {
       // Ensure DB exists
       const db = mysql.createConnection({
-        host: "127.0.0.1",
+        host: config.mysql.host,
         user: config.mysql.user,
         pass: config.mysql.pass
       });

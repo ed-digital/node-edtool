@@ -96,7 +96,7 @@ class Compiler extends EventEmitter {
 	compile(watch) {
 		if(!this.skipWordpress) {
 			this.compileLESS(watch);
-            this.compileSASS(watch);
+      this.compileSASS(watch);
 		}
 		this.compileJS(watch);
 		// this.compileHTML(watch);
@@ -113,8 +113,17 @@ class Compiler extends EventEmitter {
 		let files = ['screen.less', 'print.less'];
 
 		let compile = (file) => {
+			
+			let fullPath = this.assetPath+'/less/'+file
+			
+			try {
+				fs.accessSync(fullPath)
+			} catch(err) {
+				// File doesn't exist. So what
+				return
+			}
 
-			gulp.src(this.assetPath+'/less/'+file)
+			gulp.src(fullPath)
 				.pipe(less())
 				.pipe(autoprefixer())
 				.on('error', (err) => {
@@ -159,7 +168,16 @@ class Compiler extends EventEmitter {
 		
 		let compile = (file) => {
 			
-			gulp.src(this.assetPath+'/sass/'+file)
+			let fullPath = this.assetPath+'/sass/'+file
+			
+			try {
+				fs.accessSync(fullPath)
+			} catch(err) {
+				// File doesn't exist. So what
+				return
+			}
+			
+			gulp.src(fullPath)
 				.pipe(sass().on('error', sass.logError))
 				.pipe(autoprefixer())
 				.on('error', (err) => {
