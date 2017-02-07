@@ -250,6 +250,9 @@ class Compiler extends EventEmitter {
     bundler.on('time', (time) => {
       console.log(chalk.cyan(">> JS compilation completed in "+time+"ms"));
       this.changed();
+			if(!watch) {
+				bundler.close()
+			}
     });
 
 		if(watch) {
