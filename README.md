@@ -12,8 +12,7 @@ Prerequisits and assumptions:
 To install, open Terminal and type:
 
 ```
-npm install -g ed-wp
-ed
+npm install -g edwp
 ```
 
 This will add a new command for you to run at any time, the `ed` command. Note that this will overwrite the 'ed' editor which ships with Mac OS and some Linux distributions.
