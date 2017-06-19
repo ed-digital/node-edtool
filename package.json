@@ -27,13 +27,11 @@
     "gulp": "github:gulpjs/gulp#4.0",
     "gulp-autoprefixer": "^3.1.1",
     "gulp-less": "^3.1.0",
-    "gulp-sass": "^2.3.2",
     "gulp-sourcemaps": "^1.6.0",
     "gulp-watch": "^4.3.9",
     "less": "^2.7.1",
     "minimist": "^1.2.0",
     "mysql": "^2.11.1",
-    "node-sass": "^4.2.0",
     "printf": "^0.2.5",
     "require-globify": "^1.4.1",
     "string-argv": "0.0.2",
@@ -42,7 +40,5 @@
     "watchify": "^3.7.0"
   },
   "repository": "ed-digital/node-edtool",
-  "devDependencies": {
-    "gulp-sass": "^2.3.2"
-  }
+  "devDependencies": {}
 }
