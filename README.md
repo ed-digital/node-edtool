@@ -18,7 +18,7 @@ npm install -g edwp
 This will add a new command for you to run at any time, the `ed` command. Note that this will overwrite the 'ed' editor which ships with Mac OS and some Linux distributions.
 
 Now setup your local web server. If you're using MAMP you'll need to configure a couple of things first. 
-1. Go to the ports tab and ensure that the MySQL tab is set to 3306 (this is not default).
+1. Go to the ports tab and ensure that the MySQL port is set to 3306 (this is not default).
 2. Open PHPMyAdmin and create a new user with full priviledges called something other than "root". (the "root" username can be used with XAMPP).
 
 Next, you'll want to create a configuration for your local machine. Make sure MySQL is already running, as it'll attempt to connect.
