@@ -19,7 +19,7 @@ const gulp = require('gulp');
 const gulpWatch = require('gulp-watch');
 const less = require('gulp-less');
 // const sass = require('node-sass');
-// const sass = require('gulp-sass');
+const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
 
 // module.exports = function(workingDir, options) {
@@ -96,7 +96,7 @@ class Compiler extends EventEmitter {
 	compile(watch) {
 		if(!this.skipWordpress) {
 			this.compileLESS(watch);
-      // this.compileSASS(watch);
+			this.compileSASS(watch);
 		}
 		this.compileJS(watch);
 		// this.compileHTML(watch);
@@ -160,59 +160,59 @@ class Compiler extends EventEmitter {
 
 	}
 
-	// compileSASS(watch) {
-	//
-	// 	console.log(chalk.yellow(">> Compiling SASS"));
-	//
-	// 	let files = ['screen.scss'];
-	//
-	// 	let compile = (file) => {
-	//
-	// 		let fullPath = this.assetPath+'/sass/'+file
-	//
-	// 		try {
-	// 			fs.accessSync(fullPath)
-	// 		} catch(err) {
-	// 			// File doesn't exist. So what
-	// 			return
-	// 		}
-	//
-	// 		gulp.src(fullPath)
-	// 			.pipe(sass().on('error', sass.logError))
-	// 			.pipe(autoprefixer())
-	// 			.on('error', (err) => {
-	//
-	// 				console.log(chalk.black(chalk.bgRed(">> SASS Compiler Error")));
-	// 				console.log(err.message);
-	//
-	// 				this.addError('sass', `Failed to compile ${file}`, err.message);
-	//
-	// 			})
-	// 			.pipe(gulp.dest('./assets-built/css'))
-	// 			.on('end', () => {
-	// 				console.log(chalk.cyan(">> Finished compiling "+file));
-	// 				this.changed();
-	// 			});
-	//
-	// 	};
-	//
-	// 	let compileAll = () => {
-	// 		this.clearErrors('sass');
-	// 		for(let file of files) {
-	// 			compile(file);
-	// 		}
-	// 	};
-	//
-	// 	if(watch) {
-	// 		gulpWatch(this.assetPath+'/sass/**/*', () => {
-	// 			console.log(chalk.magenta("------- Detected changes in SASS -------"));
-	// 			compileAll();
-	// 		});
-	// 	}
-	//
-	// 	compileAll();
-	//
-	// }
+	compileSASS(watch) {
+	
+		console.log(chalk.yellow(">> Compiling SASS"));
+	
+		let files = ['screen.scss'];
+	
+		let compile = (file) => {
+	
+			let fullPath = this.assetPath+'/sass/'+file
+	
+			try {
+				fs.accessSync(fullPath)
+			} catch(err) {
+				// File doesn't exist. So what
+				return
+			}
+	
+			gulp.src(fullPath)
+				.pipe(sass().on('error', sass.logError))
+				.pipe(autoprefixer())
+				.on('error', (err) => {
+	
+					console.log(chalk.black(chalk.bgRed(">> SASS Compiler Error")));
+					console.log(err.message);
+	
+					this.addError('sass', `Failed to compile ${file}`, err.message);
+	
+				})
+				.pipe(gulp.dest('./assets-built/css'))
+				.on('end', () => {
+					console.log(chalk.cyan(">> Finished compiling "+file));
+					this.changed();
+				});
+	
+		};
+	
+		let compileAll = () => {
+			this.clearErrors('sass');
+			for(let file of files) {
+				compile(file);
+			}
+		};
+	
+		if(watch) {
+			gulpWatch(this.assetPath+'/sass/**/*', () => {
+				console.log(chalk.magenta("------- Detected changes in SASS -------"));
+				compileAll();
+			});
+		}
+	
+		compileAll();
+	
+	}
 	
 	compileJS(watch) {
 
