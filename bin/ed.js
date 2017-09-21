@@ -55,21 +55,29 @@ const commands = {
     hidden: true,
     run: (argv) => {
       let files = ['.zshrc', '.bash_profile', '.profile'];
+      let shellFunc = fs.readFileSync(path.resolve(__dirname, "../shell_function")).toString();
       for(let fileName of files) {
         let shellFile = path.join(os.homedir(), fileName);
         // Grab contents of shell file, ripping out old stuff
         try {
           let contents = fs.readFileSync(shellFile).toString().replace(/#BEGIN_EDWP\n(.|[\s\S])+#END_EDWP/, '');
-          let shellFunc = fs.readFileSync(path.resolve(__dirname, "../shell_function")).toString();
           contents += `\n#BEGIN_EDWP\n${shellFunc}\n#END_EDWP`;
           fs.writeFileSync(shellFile, contents);
-          console.log(C.magenta("✔ Updated your ~/.profile with some cool stuff."));
+          console.log(C.magenta("✔ Updated your ~/"+fileName+" with some cool stuff."));
           return;
         } catch(err) {
           
         }
       }
-      console.log(C.red("ERROR! Unable to find/update any shell profile files (eg. "+files.join(', ')+") while attempting to add cool stuff. Try running `ed shell-setup` later on."));
+      // Fallback to .profile if none of the files were found
+      try {
+        let fileName = '.bash_profile';
+        let shellFile = path.join(os.homedir(), fileName);
+        fs.writeFileSync(shellFile, shellFunc);
+        console.log(C.magenta("✔ Updated your ~/"+fileName+" with some cool stuff."));
+      } catch(err) {
+        console.log(C.red("ERROR! Unable to find/update any shell profile files (eg. "+files.join(', ')+") while attempting to add cool stuff. Try running `ed shell-setup` later on."));
+      }
     }
   },
   "ls": {
