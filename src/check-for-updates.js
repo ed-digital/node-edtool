@@ -3,7 +3,7 @@ const npmAPI = require('api-npm')
 const compareVersions = require('compare-versions')
 const chalk = require('chalk')
 
-module.exports = function (callback) {
+module.exports = function () {
   
   // Check for a .git folder — if we receive an error, it means none exists, therefore the package has likely been installed globally
   fs.access(__dirname+'/../.git', (err) => {
