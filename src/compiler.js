@@ -8,6 +8,7 @@ const wp = require('./wp');
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto')
 
 const EventEmitter = require('events').EventEmitter;
 
@@ -22,21 +23,7 @@ const less = require('gulp-less');
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
 
-// module.exports = function(workingDir, options) {
-//
-//   let siteRoot = wp.getSiteRoot(workingDir);
-//   let themeName = wp.getThemeName(siteRoot);
-//   let themePath = path.join(siteRoot, 'wp-content/themes', themeName);
-//
-//   var b = browserify(path.join(themePath, 'assets-src/js/index.js'))
-//     .transform(requireGlobify)
-//     .transform(babelify.configure({
-//       presets: ["es2015"]
-//     }))
-//     .bundle()
-//     .pipe(fs.createWriteStream(path.join(themePath, 'client/js/bundle.js')));4
-//
-// };
+const checkForUpdates = require('./check-for-updates')
 
 class Compiler extends EventEmitter {
 
@@ -99,6 +86,11 @@ class Compiler extends EventEmitter {
 			this.compileSASS(watch);
 		}
 		this.compileJS(watch);
+		
+		if (watch) {
+			// Check for updates and display a nice message, but only if we're in watch mode (in case it takes a while)
+			checkForUpdates()
+		}
 		// this.compileHTML(watch);
 	}
 
@@ -214,16 +206,33 @@ class Compiler extends EventEmitter {
 	
 	}
 	
+	hash (data) {
+		return crypto.createHash('md5').update(JSON.stringify(data)).digest("hex");
+	}
+	
 	compileJS(watch) {
 
     let plugin = require('babel-plugin-import-glob');
 
 		var bundler = watchify(browserify(this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js', { debug: false })
       .transform(babelify.configure({
-  			presets: [require('babel-preset-es2015')],
+  			presets: [require('babel-preset-env'), require('babel-preset-react')],
         plugins: [require('babel-plugin-import-glob').default]
   		}))
     );
+		
+		if (watch) {
+			let hash = null
+			setInterval(() => {
+				fs.readdir(this.assetPath+'/js/widgets', (err, files) => {
+					const newHash = this.hash(files)
+					if (hash !== null && hash != newHash) {
+						rebundle()
+					}
+					hash = newHash
+				})
+			}, 500)
+		}
 
 		const rebundle = () => {
 			console.log(chalk.yellow(">> Compiling JS"));
