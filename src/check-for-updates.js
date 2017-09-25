@@ -9,12 +9,12 @@ module.exports = function (callback) {
   fs.access(__dirname+'/../.git', (err) => {
     if (err) {
       // Check for new version
-      const currentVersion = require(__dirname+'/../package.json')
+      const currentVersion = require(__dirname+'/../package.json').version
       npmAPI.getdetails('edwp', (data) => {
         try {
           const latestVersion = data['dist-tags'].latest
           if (latestVersion && currentVersion && compareVersions(latestVersion, currentVersion) > 0) {
-            console.log(chalk.magenta("A new version of 'ed' is out! Type " + chalk.yellow('npm install -g edwp') + " to upgrade"))
+            console.log(chalk.magenta("A new version of this tool is out! Type " + chalk.yellow('npm install -g edwp') + " to upgrade!"))
           }
         } catch (err) {
           console.log(chalk.red('Error checking for latest version... ' + err.message))

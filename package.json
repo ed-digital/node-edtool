@@ -16,7 +16,6 @@
   "dependencies": {
     "api-npm": "^1.0.0",
     "async": "^2.1.4",
-    "babel": "^6.5.2",
     "babel-cli": "^6.26.0",
     "babel-plugin-import-glob": "^1.0.1",
     "babel-preset-env": "^1.6.0",
