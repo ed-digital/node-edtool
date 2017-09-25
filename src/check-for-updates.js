@@ -14,7 +14,7 @@ module.exports = function (callback) {
         try {
           const latestVersion = data['dist-tags'].latest
           if (latestVersion && currentVersion && compareVersions(latestVersion, currentVersion) > 0) {
-            console.log(chalk.magenta("A new version of this tool is out! Type " + chalk.yellow('npm install -g edwp') + " to upgrade!"))
+            console.log(chalk.magenta("A new version of this tool is out!\n- You have "+currentVersion+", but "+latestVersion+" is available.\n- Type " + chalk.yellow('npm install -g edwp') + " to upgrade!"))
           }
         } catch (err) {
           console.log(chalk.red('Error checking for latest version... ' + err.message))
