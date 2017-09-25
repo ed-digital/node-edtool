@@ -216,7 +216,7 @@ class Compiler extends EventEmitter {
 
 		var bundler = watchify(browserify(this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js', { debug: false })
       .transform(babelify.configure({
-  			presets: [require('babel-preset-env'), require('babel-preset-react')],
+  			presets: [require('babel-preset-env')],
         plugins: [require('babel-plugin-import-glob').default]
   		}))
     );
