@@ -19,6 +19,7 @@ const buffer = require('vinyl-buffer');
 const gulp = require('gulp');
 const gulpWatch = require('gulp-watch');
 const less = require('gulp-less');
+const uglify = require("gulp-uglify");
 // const sass = require('node-sass');
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
@@ -214,8 +215,9 @@ class Compiler extends EventEmitter {
 
     let plugin = require('babel-plugin-import-glob');
 
-		var bundler = watchify(browserify(this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js', { debug: false })
+		var bundler = watchify(browserify(this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js', { debug: true })
       .transform(babelify.configure({
+				sourceMaps: true,
   			presets: [require('babel-preset-env')],
         plugins: [require('babel-plugin-import-glob').default]
   		}))
@@ -252,6 +254,7 @@ class Compiler extends EventEmitter {
 				.pipe(sourcemaps.init({
 					loadMaps: true
 				}))
+				.pipe(uglify())
 				.pipe(sourcemaps.write('./'))
 				.pipe(gulp.dest(path.join(this.themePath, '/assets-built/js')));
 		};
