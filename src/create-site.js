@@ -25,14 +25,38 @@ function createSite(options, callback) {
   
   let wp = getWPSession(options.rootDir);
   
-  options.wpAdmin = config.defaultAdmin || 'admin';
-  options.wpPass = generatePassword({
-    length: 14,
-    numbers: true,
-    symbols: false,
-    excludeSimilarCharacters: true
-  });
-  options.wpEmail = config.defaultAdminEmail || "root@localhost";
+  if (!options.isFlywheel) {
+    options.dbHost = config.mysql.host
+    options.dbPort = config.mysql.port
+    options.dbUser = config.mysql.user
+    options.dbPass = config.mysql.pass
+    options.wpAdmin = config.defaultAdmin || 'admin';
+    options.wpPass = generatePassword({
+      length: 14,
+      numbers: true,
+      symbols: false,
+      excludeSimilarCharacters: true
+    });
+    options.wpEmail = config.defaultAdminEmail || "root@localhost";
+    // options.mysqlHost =
+  } else {
+    const flywheelConfigFolder = path.join(process.env.HOME, 'Library/Application Support/Local by Flywheel')
+    const data = fse.readJsonSync(path.join(flywheelConfigFolder, 'sites.json'))
+    for (let key in data) {
+      const item = data[key]
+      if (item.path.indexOf('/' + options.flywheelName) > 0) {
+        options.flywheelData = item
+        break
+      }
+    }
+    if (!options.flywheelData) {
+      throw new Error('Could not locate site in '+flywheelConfigFolder+'/sites.json')
+    }
+    
+    const flywheelHost = fs.readFileSync(path.join(flywheelConfigFolder, 'machine-ip.json')).toString()
+    console.log('Host', flywheelHost)
+    wp.setFlywheelHost(flywheelHost)
+  }
   
   options.themePath = path.join(options.rootDir, 'wp-content/themes', options.themeName);
   
@@ -44,6 +68,7 @@ function createSite(options, callback) {
   
   async.series([
     (next) => {
+      if (options.isFlywheel) return next()
       // Start by downloading WP files
       console.log(C.cyan("Downloading WordPress..."));
       wp.runCommand('core download', function(code, out, err) {
@@ -54,6 +79,7 @@ function createSite(options, callback) {
       });
     },
     (next) => {
+      if (options.isFlywheel) return next()
       // Ensure DB exists
       const db = mysql.createConnection({
         host: config.mysql.host,
@@ -76,6 +102,7 @@ function createSite(options, callback) {
       });
     },
     (next) => {
+      if (options.isFlywheel) return next()
       console.log(C.cyan("Configuring WP..."));
       wp.runCommand(`core config --dbname=${options.dbName} --dbuser=${escape(config.mysql.user)} --dbpass=${escape(config.mysql.pass)} --dbhost=${escape(config.mysql.host)} --skip-check`, function(code, out, err) {
         if(code === 0) {
@@ -88,6 +115,7 @@ function createSite(options, callback) {
     },
     (next) => {
       // Now install
+      if (options.isFlywheel) return next()
       console.log(C.cyan("Installing..."));
       wp.runCommand(['core', 'install', `--url=${options.siteURL}`, `--title=${options.title}`, `--admin_user=${escape(options.wpAdmin)}`, `--admin_password=${escape(options.wpPass)}`,`--admin_email=${escape(options.wpEmail)}`], function(code, out, err) {
         if(code === 0) {
@@ -97,6 +125,16 @@ function createSite(options, callback) {
           console.log(C.red(":( Installation Failed"));
         }
       });
+    },
+    (next) => {
+      // If this is a flywheel site, modify the wp-config.php file to include the docker hostname
+      if (!options.isFlywheel) return next()
+      const configPath = path.join(options.rootDir, 'wp-config.php')
+      const contents = fs.readFileSync(configPath).toString()
+        .replace(/define\( 'DB_HOST', (['"])/, "define( 'DB_HOST', (defined( 'WP_CLI' ) && WP_CLI ) ? getenv('FLYWHEEL_HOST').':'.'" + options.flywheelData.ports.MYSQL + "' : $1")
+      fs.writeFileSync(configPath, contents)
+      console.log('Outpt', contents)
+      next()
     },
     (next) => {
       // Set up theme
@@ -172,7 +210,11 @@ function createSite(options, callback) {
     (next) => {
       // Notify the user of admin password
       globalConf.setProjectConf(options.projectName, options);
-      console.log(C.green(`\n✔✔✔✔ Completed WP Setup! Below are your login details. Be sure to save them in a safe place.\n\nProject Name: ${options.projectName}\nSite Title: ${options.title}\nURL: ${options.siteURL}\nUsername: ${options.wpAdmin}\nPassword: ${options.wpPass}`));
+      if (options.isFlywheel) {
+        console.log(C.green(`\n✔✔✔✔ Complete!`));
+      } else {
+        console.log(C.green(`\n✔✔✔✔ Completed WP Setup! Below are your login details. Be sure to save them in a safe place.\n\nProject Name: ${options.projectName}\nSite Title: ${options.title}\nURL: ${options.siteURL}\nUsername: ${options.wpAdmin}\nPassword: ${options.wpPass}`));
+      }
       console.log(C.green(`✔ Now type: ed go ${options.projectName}`));
       console.log(C.green(`            npm install`));
       console.log(C.green(`            ed build --watch`));
@@ -192,26 +234,35 @@ createSite.interactive = function(_) {
     siteURL: null,
     themeName: null,
     rootDir: null,
-    projectName: false
+    projectName: false,
+    isFlywheel: false
   };
   if(_) Object.assign(options, _);
   let wizard = new Wizard();
   
   let dirContents;
   
-  try {
-    dirContents = fs.readdirSync(options.rootDir);
-  } catch(e) {
-    // Warn if the folder doesn't exist
-    wizard.getBool(`Directory '${options.rootDir}' does not exist.\nCreate folder?`, false, (create) => {
+  if (options.isFlywheel) {
+    wizard.getBool(`Setup a new theme and install the ED. plugin for the Flywheel site at:\n${options.rootDir}?`, false, (create) => {
       if(create === false) {
         process.exit();
       }
     });
+  } else {
+    try {
+      dirContents = fs.readdirSync(options.rootDir);
+    } catch(e) {
+      // Warn if the folder doesn't exist
+      wizard.getBool(`Directory '${options.rootDir}' does not exist.\nCreate folder?`, false, (create) => {
+        if(create === false) {
+          process.exit();
+        }
+      });
+    }
   }
 
   // Warn if more than 2 files, so we're not overwriting anything important!
-  if(dirContents && dirContents.length > 2) {
+  if(options.isFlywheel == false && dirContents && dirContents.length > 2) {
     wizard.getBool(`Directory '${options.rootDir}' is not empty.\nFolder contains ${dirContents.length} files.\nContinue anyway?`, false, (answer) => {
       if(answer === false) {
         process.exit();
@@ -238,20 +289,25 @@ createSite.interactive = function(_) {
     options.projectName = value;
   });
   
-  wizard.getText("Enter the Website Title", () => options.projectName, (value) => {
-    if(!value) return false;
-    options.title = value;
-  });
+  if (options.isFlywheel == false) {
+    wizard.getText("Enter the Website Title", () => options.projectName, (value) => {
+      if(!value) return false;
+      options.title = value;
+    });
+  }
   
-  wizard.getText("Enter the domain or URL you'll be using. (eg. coolsite.dev)", () => options.projectName+".dev", (value) => {
-    if(!value) return false;
-    if(!value.match(/^[A-Z0-9\-\_\.]+$/i)) {
-      return wizard.error("Invalid characters.");
-    }
-    options.siteURL = value;
-  });
+  if (options.isFlywheel == false) {
+    wizard.getText("Enter the domain or URL you'll be using. (eg. coolsite.dev)", () => options.projectName+".dev", (value) => {
+      if(!value) return false;
+      if(!value.match(/^[A-Z0-9\-\_\.]+$/i)) {
+        return wizard.error("Invalid characters.");
+      }
+      options.siteURL = value;
+    });
+  }
   
   wizard.begin(() => {
+    console.log('Creating with options', options)
     createSite(options);
   });
   

@@ -2,11 +2,12 @@ const child_process = require('child_process');
 const splitArgs = require('string-argv');
 const chalk = require('chalk');
 
-module.exports = (cmd, rootDir, callback) => {
+module.exports = (cmd, rootDir, callback, env) => {
   console.log(chalk.magenta("> Running Command > " + (Array.isArray(cmd) ? cmd.join(' ') : cmd)));
   let parts = Array.isArray(cmd) ? cmd : splitArgs(cmd);
   let proc = child_process.spawn(parts[0], parts.slice(1), {
-    cwd: rootDir
+    cwd: rootDir,
+    env: env
   });
   let stdoutBuffer = "";
   let stderrBuffer = "";
@@ -23,11 +24,12 @@ module.exports = (cmd, rootDir, callback) => {
   });
 };
 
-module.exports.sync = (cmd, rootDir) => {
+module.exports.sync = (cmd, rootDir, env) => {
   let parts = Array.isArray(cmd) ? cmd : splitArgs(cmd);
   let proc = child_process.spawnSync(parts[0], parts.slice(1), {
     cwd: rootDir,
-    stdio: [null, null, process.stdout]
+    stdio: [null, null, process.stdout],
+    env: env
   });
   return {
     code: proc.status,

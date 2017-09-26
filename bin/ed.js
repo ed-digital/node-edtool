@@ -9,6 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const printf = require('printf');
+const findFlywheelSite = require('../src/locate-flywheel')
 
 const commands = {
   "create": {
@@ -25,6 +26,38 @@ const commands = {
         edwp.createSite.interactive({
           rootDir: rootDir,
           projectName: path.basename(rootDir).replace(/(\..*$|[^A-Z0-9\-\_])/ig, '')
+        });
+      }
+    }
+  },
+  "flywheel": {
+    description: "Installs the required plugins and default theme to a new Local\nFlywheel site, and adds it to the project list.",
+    usage: ["flywheel <name>"],
+    run: (args) => {
+      if(argv._.length === 0) {
+        showHelp('create');
+      } else if(argv._.length > 1) {
+        console.log(C.red('Too many arguments'));
+        showHelp('create');
+      } else {
+        let name = argv._[0]
+        let rootDir
+        try {
+          rootDir = findFlywheelSite(argv._[0]);
+        } catch (err) {
+          console.log(C.red("Error: "+err.message))
+          return
+        }
+        let shortname = name
+        const dashes = name.match(/-/g)
+        if (name.length > 6 && dashes && dashes.length >= 2) {
+          shortname = name.replace(/\b([a-z0-9])[a-z0-9]+\b/g, '$1').replace(/-/g,'')
+        }
+        edwp.createSite.interactive({
+          isFlywheel: true,
+          flywheelName: name,
+          rootDir: rootDir,
+          projectName: shortname
         });
       }
     }
@@ -82,7 +115,7 @@ const commands = {
   },
   "ls": {
     description: "Lists known projects",
-    usage: ["ls-projects"],
+    usage: ["ls"],
     run(argv) {
       let projects = edwp.globalConfig.getProjects();
       console.log(C.green(`\nBelow is a list of sites scanned on your machine:`));
