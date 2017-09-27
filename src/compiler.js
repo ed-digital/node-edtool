@@ -254,7 +254,7 @@ class Compiler extends EventEmitter {
 				.pipe(sourcemaps.init({
 					loadMaps: true
 				}))
-				.pipe(uglify())
+				// .pipe(uglify())
 				.pipe(sourcemaps.write('./'))
 				.pipe(gulp.dest(path.join(this.themePath, '/assets-built/js')));
 		};
