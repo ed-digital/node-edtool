@@ -70,10 +70,26 @@ const commands = {
         console.log(C.red('Too many arguments'));
         showHelp('build');
       } else {
+        const watch = argv.watch || argv.w
+        
+        // Start dev refresh server
+        const RefreshServer = require('../src/dev-refresh-server');
+        const refreshServer = new RefreshServer()
+        
         // Start build
         const Compiler = require('../src/compiler');
-        let compiler = new Compiler(process.cwd(), argv.force || argv.f);
-        compiler.compile(argv.watch || argv.w);
+        const compiler = new Compiler(process.cwd(), argv.force || argv.f);
+        
+        if (watch) {
+          refreshServer.start()
+          compiler.refreshPort = refreshServer.port
+          compiler.compile(watch);
+          compiler.on('changed', () => {
+            refreshServer.triggerRefresh()
+          })
+        } else {
+          compiler.compile(false)
+        }
       }
     }
   },

@@ -212,6 +212,86 @@ class Compiler extends EventEmitter {
 	}
 	
 	compileJS(watch) {
+		
+		console.log(chalk.yellow(">> Compiling JS"));
+		
+		const webpack = require('webpack')
+		
+		const compiler = webpack({
+			entry: [
+				require.resolve('./dev-refresh-client'),
+				this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js'
+			],
+			output: {
+				path: path.join(this.themePath, '/assets-built/js'),
+				filename: 'bundle.js'
+			},
+			devtool: 'source-map',
+			module: {
+				rules: [
+					{
+						test: /\.js$/,
+						exclude: /node_modules/,
+						loader: require.resolve("babel-loader"),
+						options: {
+							sourceMaps: true,
+			  			presets: [require.resolve('babel-preset-env')],
+			        plugins: [require.resolve('babel-plugin-import-glob')]
+						}
+					}
+				]
+			},
+			plugins: [
+				new webpack.DefinePlugin({
+					'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)
+				})
+			]
+		})
+		
+		compiler.plugin("after-emit", (compilation, callback) => {
+			// console.log("Emitted", Object.keys(compilation), "Yeah")
+			callback()
+		})
+		
+		compiler.plugin("done", (stats) => {
+			if (stats.hasErrors()) {
+				console.log(chalk.red(">> Error Compiling JS:"));
+				const info = stats.toJson()
+				if (info.errors && info.errors.length) {
+					console.error(info.errors[0])
+				}
+			} else {
+				console.log(chalk.cyan(">> JS compilation completed in "+(stats.endTime - stats.startTime)+"ms"));
+				this.changed();
+			}
+		})
+		
+		compiler.plugin("invalid", (fileName) => {
+			fileName = fileName.replace(this.themePath, '')
+			console.log(chalk.green(">> Detected changes: ") + chalk.magenta(fileName))
+		})
+		
+		if (watch) {
+			const runWatch = () => {
+				compiler.watch({}, () => {})
+			}
+			runWatch()
+			
+			// Also watch for new files to auto-include
+			let hash = null
+			setInterval(() => {
+				fs.readdir(this.assetPath+'/js/widgets', (err, files) => {
+					const newHash = this.hash(files)
+					if (hash !== null && hash != newHash) {
+						console.log('Re-running')
+						runWatch()
+					}
+					hash = newHash
+				})
+			}, 500)
+		} else {
+			compiler.run(() => {})
+		}
 
     let plugin = require('babel-plugin-import-glob');
 
@@ -223,58 +303,6 @@ class Compiler extends EventEmitter {
   		}))
     );
 		
-		if (watch) {
-			let hash = null
-			setInterval(() => {
-				fs.readdir(this.assetPath+'/js/widgets', (err, files) => {
-					const newHash = this.hash(files)
-					if (hash !== null && hash != newHash) {
-						rebundle()
-					}
-					hash = newHash
-				})
-			}, 500)
-		}
-
-		const rebundle = () => {
-			console.log(chalk.yellow(">> Compiling JS"));
-			this.clearErrors('js');
-
-			bundler.bundle()
-				.on('error', (err) => {
-
-					console.log(chalk.black(chalk.bgRed(">> JS Compiler Error")));
-					console.log(err.message + (err.codeFrame ? "\n"+err.codeFrame : ""));
-
-					this.addError('js', `Failed to compile JS`, err.message + (err.codeFrame ? "\n"+err.codeFrame : ""));
-
-				})
-				.pipe(source('bundle.js'))
-				.pipe(buffer())
-				.pipe(sourcemaps.init({
-					loadMaps: true
-				}))
-				// .pipe(uglify())
-				.pipe(sourcemaps.write('./'))
-				.pipe(gulp.dest(path.join(this.themePath, '/assets-built/js')));
-		};
-
-    bundler.on('time', (time) => {
-      console.log(chalk.cyan(">> JS compilation completed in "+time+"ms"));
-      this.changed();
-			if(!watch) {
-				bundler.close()
-			}
-    });
-
-		if(watch) {
-			bundler.on('update', () => {
-				console.log(chalk.magenta("------- Detected changes in JS -------"));
-				rebundle();
-			});
-		}
-
-		rebundle();
 	}
 
 	changed() {
