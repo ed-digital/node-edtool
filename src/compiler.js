@@ -246,6 +246,14 @@ class Compiler extends EventEmitter {
 					'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)
 				})
 			]
+		}, (err, stats) => {
+			if (err) {
+		    console.error(err.stack || err);
+		    if (err.details) {
+		      console.error(err.details);
+		    }
+		    return;
+		  }
 		})
 		
 		compiler.plugin("after-emit", (compilation, callback) => {
@@ -272,10 +280,15 @@ class Compiler extends EventEmitter {
 		})
 		
 		if (watch) {
+			let watching
 			const runWatch = () => {
-				compiler.watch({}, () => {})
+				watching = compiler.watch({}, () => {})
 			}
-			runWatch()
+			compiler.plugin("done", () => {
+				if (!watching) {
+					runWatch()
+				}
+			})
 			
 			// Also watch for new files to auto-include
 			let hash = null
@@ -283,8 +296,8 @@ class Compiler extends EventEmitter {
 				fs.readdir(this.assetPath+'/js/widgets', (err, files) => {
 					const newHash = this.hash(files)
 					if (hash !== null && hash != newHash) {
-						console.log('Re-running')
-						runWatch()
+						console.log(chalk.green(">> Detected change in file list, recompiling"))
+						watching.invalidate()
 					}
 					hash = newHash
 				})
@@ -292,16 +305,16 @@ class Compiler extends EventEmitter {
 		} else {
 			compiler.run(() => {})
 		}
-
-    let plugin = require('babel-plugin-import-glob');
-
-		var bundler = watchify(browserify(this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js', { debug: true })
-      .transform(babelify.configure({
-				sourceMaps: true,
-  			presets: [require('babel-preset-env')],
-        plugins: [require('babel-plugin-import-glob').default]
-  		}))
-    );
+		//
+    // let plugin = require('babel-plugin-import-glob');
+		//
+		// var bundler = watchify(browserify(this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js', { debug: true })
+    //   .transform(babelify.configure({
+		// 		sourceMaps: true,
+  	// 		presets: [require('babel-preset-env')],
+    //     plugins: [require('babel-plugin-import-glob').default]
+  	// 	}))
+    // );
 		
 	}
 
