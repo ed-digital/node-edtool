@@ -40,15 +40,21 @@ class Compiler extends EventEmitter {
 			this.assetPath = process.cwd();
 		} else {
 	    let pathMatch = process.cwd().match(/wp\-content\/themes\/([A-Z0-9\_\-\.]+)[\/]?$/i);
-	    if(pathMatch) {
-	      this.themeName = pathMatch[1];
-	      this.siteRoot = process.cwd().replace(pathMatch[0], '');
-	    } else {
-	      this.siteRoot = wp.getSiteRoot(workingDir);
-	      this.themeName = wp.getThemeName(this.siteRoot);
-	    }
-	    this.themePath = path.join(this.siteRoot, 'wp-content/themes', this.themeName);
-	    this.assetPath = path.join(this.themePath, 'assets-src');
+			try {
+		    if(pathMatch) {
+		      this.themeName = pathMatch[1];
+		      this.siteRoot = process.cwd().replace(pathMatch[0], '');
+		    } else {
+		      this.siteRoot = wp.getSiteRoot(workingDir);
+		      this.themeName = wp.getThemeName(this.siteRoot);
+		    }
+				this.themePath = path.join(this.siteRoot, 'wp-content/themes', this.themeName);
+		    this.assetPath = path.join(this.themePath, 'assets-src');
+			} catch (err) {
+				this.themeName = 'unknown'
+				this.themePath = workingDir
+				this.assetPath = path.join(this.themePath, 'assets-src')
+			}
 		}
 
 		this.errors = {};
