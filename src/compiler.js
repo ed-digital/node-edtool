@@ -110,6 +110,11 @@ class Compiler extends EventEmitter {
 		console.log(chalk.yellow(">> Compiling LESS"));
 
 		let files = ['screen.less', 'print.less'];
+		
+		try {
+			fs.accessSync(this.assetPath+'/less/admin.less')
+			files.push('admin.less')
+		} catch (err) { }
 
 		let compile = (file) => {
 			
@@ -241,8 +246,19 @@ class Compiler extends EventEmitter {
 						loader: require.resolve("babel-loader"),
 						options: {
 							sourceMaps: true,
-			  			presets: [require.resolve('babel-preset-env')],
-			        plugins: [require.resolve('babel-plugin-import-glob')]
+			  			presets: [
+								[require.resolve('babel-preset-env'),
+									{
+										targets: {
+											browser: ["last 4 years", "ie > 10"]
+										}
+									}
+								]
+							],
+			        plugins: [
+								require.resolve('babel-plugin-import-glob'),
+								require.resolve('babel-plugin-transform-class-properties')
+							]
 						}
 					}
 				]
