@@ -3,7 +3,7 @@ try {
     console.log('%cPage was reloaded automatically because of a code change.', 'color: #9c55da')
     localStorage.removeItem('wasDevReloaded')
   }
-  if (window.location.host.match(/\.dev$/) && window.WebSocket) {
+  if (window.location.host.match(/(\.dev|\.local)$/) && window.WebSocket) {
     var ws = new WebSocket('ws://127.0.0.1:' + process.env.REFRESH_PORT)
     ws.addEventListener('message', function(msg){
       if (msg.data === 'reload') {
