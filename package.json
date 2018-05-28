@@ -1,6 +1,6 @@
 {
   "name": "edwp",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "ED. Digital's WP Tool",
   "main": "index.js",
   "bin": {
@@ -48,7 +48,7 @@
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.7.0",
-    "webpack": "^3.7.1"
+    "webpack": "^3.11.0"
   },
   "repository": "ed-digital/node-edtool",
   "devDependencies": {}

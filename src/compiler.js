@@ -115,6 +115,11 @@ class Compiler extends EventEmitter {
 			fs.accessSync(this.assetPath+'/less/admin.less')
 			files.push('admin.less')
 		} catch (err) { }
+		
+		try {
+			fs.accessSync(this.assetPath+'/less/ferve.less')
+			files.push('ferve.less')
+		} catch (err) { }
 
 		let compile = (file) => {
 			
@@ -168,7 +173,7 @@ class Compiler extends EventEmitter {
 	
 		console.log(chalk.yellow(">> Compiling SASS"));
 	
-		let files = ['screen.scss'];
+		let files = ['screen.scss', 'admin.scss'];
 	
 		let compile = (file) => {
 	
@@ -242,7 +247,7 @@ class Compiler extends EventEmitter {
 				rules: [
 					{
 						test: /\.js$/,
-						exclude: /node_modules/,
+						// exclude: /node_modules/,
 						loader: require.resolve("babel-loader"),
 						options: {
 							sourceMaps: true,
@@ -250,7 +255,7 @@ class Compiler extends EventEmitter {
 								[require.resolve('babel-preset-env'),
 									{
 										targets: {
-											browser: ["last 4 years", "ie > 10"]
+											browsers: ["last 10 versions", "ie > 10"]
 										}
 									}
 								]
