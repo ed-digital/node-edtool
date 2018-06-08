@@ -71,16 +71,16 @@ const commands = {
         showHelp('build');
       } else {
         const watch = argv.watch || argv.w
-        
-        // Start dev refresh server
-        const RefreshServer = require('../src/dev-refresh-server');
-        const refreshServer = new RefreshServer()
-        
+
         // Start build
         const Compiler = require('../src/compiler');
         const compiler = new Compiler(process.cwd(), argv.force || argv.f);
-        
+
         if (watch) {
+          // Start dev refresh server
+          const RefreshServer = require('../src/dev-refresh-server');
+          const refreshServer = new RefreshServer()
+
           refreshServer.start()
           compiler.refreshPort = refreshServer.port
           compiler.compile(watch);
@@ -115,7 +115,7 @@ const commands = {
           console.log(C.magenta("✔ Updated your ~/"+fileName+" with some cool stuff."));
           return;
         } catch(err) {
-          
+
         }
       }
       // Fallback to .profile if none of the files were found
