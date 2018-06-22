@@ -288,6 +288,13 @@ class Compiler extends EventEmitter {
 				require.resolve('./dev-refresh-client'),
 				this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js'
 			],
+			resolve: {
+				extensions: ['.js'],
+				modules: [
+					path.resolve('./assets-src/js'),
+					path.resolve('./node_modules')
+				]
+			},
 			output: {
 				path: path.join(this.themePath, '/assets-built/js'),
 				filename: 'bundle.js'
@@ -342,6 +349,13 @@ class Compiler extends EventEmitter {
 			entry: [
 				this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js'
 			],
+			resolve: {
+				extensions: ['.js'],
+				modules: [
+					path.resolve('./assets-src/js'),
+					path.resolve('./node_modules')
+				]
+			},
 			output: {
 				path: path.join(this.themePath, '/assets-built/js'),
 				filename: 'bundle.js'
