@@ -261,6 +261,8 @@ class Compiler extends EventEmitter {
 				}
 			})
 
+			runWatch()
+
 			// Also watch for new files to auto-include
 			let hash = null
 			setInterval(() => {
@@ -273,6 +275,8 @@ class Compiler extends EventEmitter {
 					hash = newHash
 				})
 			}, 500)
+		} else {
+			compiler.run(() => {})
 		}
 
 	}
@@ -290,7 +294,8 @@ class Compiler extends EventEmitter {
 			],
 			output: {
 				path: path.join(this.themePath, '/assets-built/js'),
-				filename: 'bundle.js'
+				filename: 'bundle.js',
+				publicPath: path.join(this.themePath, '/assets-built/js/').replace(this.siteRoot, '/')
 			},
 			devtool: 'source-map',
 			module: {
@@ -311,6 +316,7 @@ class Compiler extends EventEmitter {
 								]
 							],
 							plugins: [
+								require.resolve('babel-plugin-syntax-dynamic-import'),
 								require.resolve('babel-plugin-import-glob'),
 								require.resolve('babel-plugin-transform-class-properties')
 							]
@@ -318,18 +324,24 @@ class Compiler extends EventEmitter {
 					}
 				]
 			},
+			resolve: {
+				alias: {
+					libs: path.join(this.themePath, '/assets-src/js/libs/')
+				}
+			},
 			plugins: [
 				new webpack.DefinePlugin({
 					'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)
 				})
 			]
-		}, (err, stats) => {
-			if (err) {
-				console.error(err.stack || err);
-				if (err.details) console.error(err.details);
-				return;
-			}
-		})
+		});
+		// }, (err, stats) => {
+		// 	if (err) {
+		// 		console.error(err.stack || err);
+		// 		if (err.details) console.error(err.details);
+		// 		return;
+		// 	}
+		// })
 	}
 
 	compileProductionJS() {
