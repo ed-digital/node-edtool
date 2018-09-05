@@ -1,6 +1,6 @@
 {
   "name": "edwp",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "description": "ED. Digital's WP Tool",
   "main": "index.js",
   "bin": {
@@ -42,6 +42,7 @@
     "gulp-watch": "^4.3.9",
     "less": "^2.7.1",
     "minimist": "^1.2.0",
+    "mkdirp": "^0.5.1",
     "mysql": "^2.11.1",
     "printf": "^0.2.5",
     "require-globify": "^1.4.1",
