@@ -1,7 +1,6 @@
 const browserify = require('browserify');
 const babelify = require('babelify');
 const requireGlobify = require('require-globify');
-// const less = require('less');
 const chalk = require('chalk');
 
 const wp = require('./wp');
@@ -12,17 +11,13 @@ const crypto = require('crypto')
 
 const EventEmitter = require('events').EventEmitter;
 
-const sourcemaps = require('gulp-sourcemaps');
-const watchify = require('watchify');
-const source = require('vinyl-source-stream');
-const buffer = require('vinyl-buffer');
 const gulp = require('gulp');
 const gulpWatch = require('gulp-watch');
 const less = require('gulp-less');
-const uglify = require("gulp-uglify");
-// const sass = require('node-sass');
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
+const sourcemaps = require('gulp-sourcemaps');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 const checkForUpdates = require('./check-for-updates')
 
@@ -105,8 +100,6 @@ class Compiler extends EventEmitter {
 
 	compileLESS(watch) {
 
-		console.log(chalk.yellow(">> Compiling LESS"));
-
 		let files = ['screen.less', 'print.less'];
 		
 		try {
@@ -123,7 +116,9 @@ class Compiler extends EventEmitter {
 			} catch(err) {
 				// File doesn't exist. So what
 				return
-			}
+      }
+      
+      console.log(chalk.yellow(">> Compiling LESS"));
 
 			gulp.src(fullPath)
 				.pipe(less())
@@ -139,7 +134,7 @@ class Compiler extends EventEmitter {
 				.pipe(gulp.dest('./assets-built/css'))
 				.on('end', () => {
 					console.log(chalk.cyan(">> Finished compiling "+file));
-					this.changed();
+					this.changed('css');
 				});
 
 		};
@@ -163,9 +158,7 @@ class Compiler extends EventEmitter {
 	}
 
 	compileSASS(watch) {
-	
-		console.log(chalk.yellow(">> Compiling SASS"));
-	
+		
 		let files = ['screen.scss'];
 	
 		let compile = (file) => {
@@ -177,7 +170,9 @@ class Compiler extends EventEmitter {
 			} catch(err) {
 				// File doesn't exist. So what
 				return
-			}
+      }
+      
+      console.log(chalk.yellow(">> Compiling SASS"));
 	
 			gulp.src(fullPath)
 				.pipe(sass().on('error', sass.logError))
@@ -193,7 +188,7 @@ class Compiler extends EventEmitter {
 				.pipe(gulp.dest('./assets-built/css'))
 				.on('end', () => {
 					console.log(chalk.cyan(">> Finished compiling "+file));
-					this.changed();
+					this.changed('css');
 				});
 	
 		};
@@ -221,66 +216,16 @@ class Compiler extends EventEmitter {
 	}
 	
 	compileJS(watch) {
-		
-		console.log(chalk.yellow(">> Compiling JS"));
-		
-		const webpack = require('webpack')
-		
-		const compiler = webpack({
-			entry: [
-				require.resolve('./dev-refresh-client'),
-				this.assetPath+'/js/index.js'
-			],
-			output: {
-				path: path.join(this.themePath, '/assets-built/js'),
-				filename: 'bundle.js'
-			},
-			devtool: 'source-map',
-			module: {
-				rules: [
-					{
-						test: /\.js$/,
-						exclude: /node_modules/,
-						loader: require.resolve("babel-loader"),
-						options: {
-							sourceMaps: true,
-			  			presets: [
-								[require.resolve('babel-preset-env'),
-									{
-										targets: {
-											browser: ["last 4 years", "ie > 10"]
-										}
-									}
-								]
-							],
-			        plugins: [
-								require.resolve('babel-plugin-import-glob'),
-								require.resolve('babel-plugin-transform-class-properties')
-							]
-						}
-					}
-				]
-			},
-			plugins: [
-				new webpack.DefinePlugin({
-					'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)
-				})
-			]
-		}, (err, stats) => {
-			if (err) {
-		    console.error(err.stack || err);
-		    if (err.details) {
-		      console.error(err.details);
-		    }
-		    return;
-		  }
-		})
-		
+
+		// "watch" implies a dev environment, no watch means we want the production build
+		const compiler = watch
+			? this.compileDevJS()
+			: this.compileProductionJS();
+
 		compiler.plugin("after-emit", (compilation, callback) => {
-			// console.log("Emitted", Object.keys(compilation), "Yeah")
 			callback()
 		})
-		
+
 		compiler.plugin("done", (stats) => {
 			if (stats.hasErrors()) {
 				console.log(chalk.red(">> Error Compiling JS:"));
@@ -290,15 +235,15 @@ class Compiler extends EventEmitter {
 				}
 			} else {
 				console.log(chalk.cyan(">> JS compilation completed in "+(stats.endTime - stats.startTime)+"ms"));
-				this.changed();
+				this.changed('js');
 			}
 		})
-		
+
 		compiler.plugin("invalid", (fileName) => {
 			fileName = fileName.replace(this.themePath, '')
 			console.log(chalk.green(">> Detected changes: ") + chalk.magenta(fileName))
 		})
-		
+
 		if (watch) {
 			let watching
 			const runWatch = () => {
@@ -309,7 +254,9 @@ class Compiler extends EventEmitter {
 					runWatch()
 				}
 			})
-			
+
+			runWatch()
+
 			// Also watch for new files to auto-include
 			let hash = null
 			setInterval(() => {
@@ -325,23 +272,136 @@ class Compiler extends EventEmitter {
 		} else {
 			compiler.run(() => {})
 		}
-		//
-    // let plugin = require('babel-plugin-import-glob');
-		//
-		// var bundler = watchify(browserify(this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js', { debug: true })
-    //   .transform(babelify.configure({
-		// 		sourceMaps: true,
-  	// 		presets: [require('babel-preset-env')],
-    //     plugins: [require('babel-plugin-import-glob').default]
-  	// 	}))
-    // );
-		
+
+  }
+  
+  compileDevJS() {
+
+		console.log(chalk.yellow(">> Compiling JS [development]"));
+
+		const webpack = require('webpack')
+
+		return webpack({
+			entry: [
+				require.resolve('./dev-refresh-client'),
+				this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js'
+			],
+			output: {
+				path: path.join(this.themePath, '/assets-built/js'),
+				filename: 'bundle.js',
+				publicPath: path.join(this.themePath, '/assets-built/js/').replace(this.siteRoot, '/')
+			},
+			devtool: 'source-map',
+			module: {
+				rules: [
+					{
+						test: /\.js$/,
+						loader: require.resolve("babel-loader"),
+						options: {
+							ignore: /(node_modules|\.min\.js)/g,
+							sourceMaps: true,
+							presets: [
+								[
+									require.resolve('babel-preset-env'),
+									{
+										targets: {
+											browsers: ["last 10 versions", "ie > 10"]
+										}
+									}
+								]
+							],
+							plugins: [
+								require.resolve('babel-plugin-syntax-dynamic-import'),
+								require.resolve('babel-plugin-import-glob'),
+								require.resolve('babel-plugin-transform-class-properties')
+							]
+						}
+					}
+				]
+			},
+			resolve: {
+				alias: {
+					libs: path.join(this.themePath, '/assets-src/js/libs/')
+				}
+			},
+			plugins: [
+				new webpack.DefinePlugin({
+					'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)
+				})
+			]
+		});
+		// }, (err, stats) => {
+		// 	if (err) {
+		// 		console.error(err.stack || err);
+		// 		if (err.details) console.error(err.details);
+		// 		return;
+		// 	}
+		// })
 	}
 
-	changed() {
+	compileProductionJS() {
+
+		console.log(chalk.yellow(">> Compiling JS [production]"));
+
+		const webpack = require('webpack')
+
+		return webpack({
+			entry: [
+				this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js'
+			],
+			output: {
+				path: path.join(this.themePath, '/assets-built/js'),
+				filename: 'bundle.js'
+			},
+			module: {
+				rules: [
+					{
+						test: /\.js$/,
+						loader: require.resolve("babel-loader"),
+						options: {
+							presets: [
+								[require.resolve('babel-preset-env'),
+									{
+										targets: {
+											browsers: ["last 10 versions", "ie > 10"]
+										}
+									}
+								]
+							],
+							plugins: [
+								require.resolve('babel-plugin-import-glob'),
+								require.resolve('babel-plugin-transform-class-properties')
+							]
+						}
+					}
+				]
+			},
+			plugins: [
+				new UglifyJsPlugin()
+				/*
+				new webpack.DefinePlugin({
+					'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)
+				})
+				*/
+			]
+		}, (err, stats) => {
+			if (err) {
+				console.error(err.stack || err);
+				if (err.details) console.error(err.details);
+				return;
+			}
+		})
+	}
+
+	changed(jsOrCSS) {
+    const change = 'css'
+    if (jsOrCSS === 'js') {
+      change = 'js'
+    }
+
 		clearTimeout(this._changeDebounce);
 		this._changeDebounce = setTimeout(() => {
-			this.emit('changed');
+			this.emit('changed', change);
 		}, 300);
 	}
 

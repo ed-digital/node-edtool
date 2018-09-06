@@ -88,8 +88,8 @@ const commands = {
           refreshServer.start()
           compiler.refreshPort = refreshServer.port
           compiler.compile(watch);
-          compiler.on('changed', () => {
-            refreshServer.triggerRefresh()
+          compiler.on('changed', (type) => {
+            refreshServer.triggerRefresh(type)
           })
         } else {
           compiler.compile(false)

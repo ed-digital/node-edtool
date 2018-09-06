@@ -28,9 +28,12 @@ module.exports = class DevRefreshServer {
     
   }
   
-  triggerRefresh () {
+  triggerRefresh (type) {
     for (let ws of this.sockets) {
-      ws.send('reload')
+      ws.send({
+        action: 'reload',
+        type
+      })
     }
   }
   
