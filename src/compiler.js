@@ -32,7 +32,7 @@ class Compiler extends EventEmitter {
 			this.siteRoot = process.cwd();
 			this.themeName = "";
 			this.themePath = process.cwd();
-			this.assetPath = `${process.cwd()}/assets-src`;
+      this.assetPath = `${process.cwd()}/assets-src`;
 		} else {
 	    let pathMatch = process.cwd().match(/wp\-content\/themes\/([A-Z0-9\_\-\.]+)[\/]?$/i);
 			try {
@@ -284,7 +284,7 @@ class Compiler extends EventEmitter {
 		return webpack({
 			entry: [
 				require.resolve('./dev-refresh-client'),
-				this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js'
+				this.assetPath+'/js/index.js'
 			],
 			output: {
 				path: path.join(this.themePath, '/assets-built/js'),
@@ -347,7 +347,7 @@ class Compiler extends EventEmitter {
 
 		return webpack({
 			entry: [
-				this.skipWordpress ? this.siteRoot : this.assetPath+'/js/index.js'
+				this.assetPath+'/js/index.js'
 			],
 			output: {
 				path: path.join(this.themePath, '/assets-built/js'),
@@ -394,7 +394,7 @@ class Compiler extends EventEmitter {
 	}
 
 	changed(jsOrCSS) {
-    const change = 'css'
+    let change = 'css'
     if (jsOrCSS === 'js') {
       change = 'js'
     }

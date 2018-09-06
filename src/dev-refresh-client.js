@@ -1,4 +1,8 @@
-(function(){
+;(function devRefreshClient(){
+  var tag = false
+  var styleTag = false
+  var tm = false
+  
   try {
     if (localStorage.getItem('wasDevReloaded')) {
       console.log('%cPage was reloaded automatically because of a code change.', 'color: #9c55da')
@@ -9,7 +13,7 @@
       ws.addEventListener('message', function(msg){
         var payload = json_parse(msg.data) || { type: 'js', action: 'reload' }
 
-        if (payload.type === 'reload') {
+        if (payload.action === 'reload') {
           if (payload.type === 'js') {
             console.log('%cDetected js code changes! Reloading page.', 'color: #9c55da')
             localStorage.setItem('wasDevReloaded', true)
@@ -43,7 +47,7 @@
       var els = toArray(document.querySelectorAll('link[rel="stylesheet"]'))
       els.forEach(function(el) {
         var href = el.getAttribute('href')
-        var isFromDist = /assets-build|dist/.test(href)
+        var isFromDist = /assets-built|dist/.test(href)
         if(isFromDist){
           var url = href.split('?')[0]
           var query = parseQuery(href)
@@ -54,11 +58,27 @@
     }
 
     function addTag(){
-      if(tag) return 
+      var head = document.head || document.getElementsByTagName('head')[0]
+      var body = document.body || document.getElementsByTagName('head')[0]
+
+      if (tag) return 
       tag = document.createElement('div')
       tag.className = 'DEV_REFRESH-style-modal'
       tag.textContent = 'Styles were updated'
-      document.body.append(tag)
+      body.append(tag)
+
+      if (styleTag) return
+      var styles = ".DEV_REFRESH-style-modal{ padding: 20px; font-size: 16px; font-weight: bold; background: #212121; color: white; position: fixed; display: inline-block; bottom: 20px; right: 0px; transform: translateX(100%); transition: transform 0.2s; z-index: 9999999; }"
+
+      styleTag = document.createElement('style')
+      styleTag.type = 'text/css'
+      if (styleTag.styleSheet) {
+        styleTag.styleSheet.cssText = css
+      } else {
+        styleTag.appendChild(document.createTextNode(styles))
+      }
+
+      head.appendChild(styleTag)
     }
 
     function addTo(arr){
@@ -85,6 +105,7 @@
         return keyVal.join('=')
       }).join('&')
     }
-  } catch(err) { }
-}
-)()
+  } catch(err) {
+    console.log(err)
+  } 
+})()

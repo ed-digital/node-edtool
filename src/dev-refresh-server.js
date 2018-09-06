@@ -29,12 +29,17 @@ module.exports = class DevRefreshServer {
   }
   
   triggerRefresh (type) {
+    const payload = json_encode({ action: 'reload', type: type || 'js' })
+
     for (let ws of this.sockets) {
-      ws.send({
-        action: 'reload',
-        type
-      })
+      ws.send(payload)
     }
   }
   
+}
+
+function json_encode(obj){
+  try{
+    return JSON.stringify(obj)
+  } catch(e) {}
 }
