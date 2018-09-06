@@ -1,9 +1,14 @@
 ;(function devRefreshClient(){
-  var tag = false
-  var styleTag = false
-  var tm = false
-  
   try {
+  
+    var tag = false
+    var styleTag = false
+    var tm = false
+
+    window.addEventListener('load', function() {
+      addTag()
+    })
+
     if (localStorage.getItem('wasDevReloaded')) {
       console.log('%cPage was reloaded automatically because of a code change.', 'color: #9c55da')
       localStorage.removeItem('wasDevReloaded')
@@ -38,7 +43,6 @@
     }
 
     function reloadCSS(){
-      addTag()
       tag.style = `transform: translateX(0);`
       clearTimeout(tm)
       tm = setTimeout(function(){
@@ -59,7 +63,7 @@
 
     function addTag(){
       var head = document.head || document.getElementsByTagName('head')[0]
-      var body = document.body || document.getElementsByTagName('head')[0]
+      var body = document.body || document.getElementsByTagName('body')[0]
 
       if (tag) return 
       tag = document.createElement('div')
@@ -79,6 +83,8 @@
       }
 
       head.appendChild(styleTag)
+      console.log('tag added', tag)
+
     }
 
     function addTo(arr){
