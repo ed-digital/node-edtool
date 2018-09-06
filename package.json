@@ -54,5 +54,7 @@
     "webpack": "^3.11.0"
   },
   "repository": "ed-digital/node-edtool",
-  "devDependencies": {}
+  "devDependencies": {
+    "uglifyjs-webpack-plugin": "^1.2.5"
+  }
 }
