@@ -83,7 +83,6 @@
       }
 
       head.appendChild(styleTag)
-      console.log('tag added', tag)
 
     }
 
@@ -112,6 +111,5 @@
       }).join('&')
     }
   } catch(err) {
-    console.log(err)
   } 
 })()
