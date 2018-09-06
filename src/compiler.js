@@ -304,6 +304,7 @@ class Compiler extends EventEmitter {
 						test: /\.js$/,
 						loader: require.resolve("babel-loader"),
 						options: {
+							ignore: /node_modules/,
 							sourceMaps: true,
 							presets: [
 								[
