@@ -6,9 +6,12 @@ const fse = require('fs-extra');
 const path = require('path');
 const async = require('async');
 const os = require('os');
-const getWPSession = require('./wpcli');
 const C = require('chalk');
+const getWPSession = require('./wpcli');
 const mysql = require('mysql');
+const FlyCli = require('./fly-wp-cli');
+const APP_SUPPORT_PATH = require('./vars/app-support-path');
+const downloadFile = require('./download-file');
 
 const generatePassword = require('generate-password').generate;
 
@@ -24,6 +27,7 @@ function createSite(options, callback) {
   fse.ensureDirSync(options.rootDir);
   
   let wp = getWPSession(options.rootDir);
+  let flycli = FlyCli(options.flywheelName);
   
   if (!options.isFlywheel) {
     options.dbHost = config.mysql.host
@@ -40,15 +44,12 @@ function createSite(options, callback) {
     options.wpEmail = config.defaultAdminEmail || "root@localhost";
     // options.mysqlHost =
   } else {
-    const flywheelConfigFolder = path.join(process.env.HOME, 'Library/Application Support/Local by Flywheel')
-    const data = fse.readJsonSync(path.join(flywheelConfigFolder, 'sites.json'))
-    for (let key in data) {
-      const item = data[key]
-      if (item.path.indexOf('/' + options.flywheelName) > 0) {
-        options.flywheelData = item
-        break
-      }
-    }
+    const flywheelConfigFolder = path.join(APP_SUPPORT_PATH, 'Local by Flywheel')
+    const data = fse.readJsonSync(path.join(flywheelConfigFolder, 'sites.json'));
+    
+    // Sets options.flywheelData to the site object
+    options.flywheelData = Object.values(data).find(site => site.name === options.flywheelName)
+
     if (!options.flywheelData) {
       throw new Error('Could not locate site in '+flywheelConfigFolder+'/sites.json')
     }
@@ -143,7 +144,7 @@ function createSite(options, callback) {
         // Create theme folder
         next => fse.ensureDir(options.themePath, next),
         // Download latest theme
-        next => exec(`curl http://ed-wp-plugin.ed.com.au/release/ed-blank-theme-latest.zip -O`, options.themePath, (code) => {
+        next => downloadFile(`http://ed-wp-plugin.ed.com.au/release/ed-blank-theme-latest.zip`, path.join(options.themePath, 'ed-blank-theme-latest.zip'), (code, err) => {
           if(code === 0) {
             next();
           } else {
@@ -151,7 +152,8 @@ function createSite(options, callback) {
           }
         }),
         // Unzip it
-        next => exec(`unzip ed-blank-theme-latest.zip`, options.themePath, (code) => {
+        // Added force overwrite flag. Windows wasn't accepting any input
+        next => exec(`unzip -o ed-blank-theme-latest.zip`, options.themePath, (code) => {
           if(code === 0) {
             next();
           } else {
@@ -173,39 +175,82 @@ function createSite(options, callback) {
           next();
         },
         // Activate the theme
-        next => wp.runCommand(`theme activate ${options.themeName} --skip-packages --skip-themes --skip-plugins`, (code) => {
-          if(code === 0) {
-            next();
-          } else {
-            console.log(C.red(":( Failed to activate theme"));
+        (next) => { 
+          if(!options.isFlywheel){
+            wp.runCommand(`theme activate ${options.themeName} --skip-packages --skip-themes --skip-plugins`, (code) => {
+              if(code === 0) {
+                next();
+              } else {
+                console.log(C.red(":( Failed to activate theme"));
+                console.log(C.red("Skipping"));            
+                next();
+              }
+            })
+          }else{
+            flycli.run(`wp theme activate ${options.themeName} --skip-packages --skip-themes --skip-plugins`)
+            .then(result => {
+              if(result.code === 0){
+                console.log(`Theme ${C.yellow(options.themeName)} activated`);
+                next();
+              }else{
+                console.log(JSON.stringify(result, null, 2));
+                console.log(C.red(":( Failed to activate theme"));
+                console.log(C.red("Skipping"));            
+                next();
+              }
+            })
           }
-        }),
+          
+        },
         // Delete zip file
         next => fs.unlink(path.join(options.themePath, 'ed-blank-theme-latest.zip'), next),
         // NPM Install
-        next => exec(`npm install`, options.themePath, (code) => {
-          if(code === 0) {
-            next();
-          } else {
-            console.log(C.red(":( Failed to run `npm install`. You may need to do this manually, later."));
-            next();
-          }
-        }),
+        next => {
+          exec.sync(`npm install`, options.themePath, (code) => {
+            console.log("This ran ");
+            if(code === 0) {
+              next();
+            } else {
+              console.log(C.red(":( Failed to run `npm install`. You may need to do this manually, later."));
+              next();
+            }
+          })
+          next();
+        },
       ], next);
     },
     (next) => {
+      if(options.isFlywheel) return next();
       // Install plugins by URL
-      async.eachSeries(getPluginList(config, options), (item, next) => {
+      async.eachSeries(getPluginList(config, options), (item, innerNext) => {
         console.log(C.cyan("Installing Plugin: "+(item.title || item.name)));
-        wp.runCommand(`plugin install ${item.name} --activate --skip-packages --skip-themes --skip-plugins`, (code) => {
+        wp.runCommand(`plugin install ${item.name} activate --skip-packages --skip-themes --skip-plugins`, (code) => {
           if(code === 0) {
             console.log(C.green(`✔ Installed '${item.title}' Successfully`));
-            next();
+            innerNext();
           } else {
             console.log(C.red(":( Failed to install plugin"));
           }
         });
       }, next);
+    },
+    (next) => {
+      if(!options.isFlywheel) return next();
+      async.eachSeries(getPluginList(config, options), (item, innerNext) => {
+
+        console.log(C.magenta(`Installing ${item.title}`))
+        flycli.run(`wp plugin install ${item.name} --activate --skip-packages --skip-themes --skip-plugins`)
+        .then(result => {
+          if(result.code === 0){
+            console.log(C.green(`✔ Installed '${item.title}' Successfully`));    
+            innerNext()      
+          }else{
+            console.log(C.red(`😢 Failed to install ${item.title}`));
+            innerNext()        
+          }
+        })
+        
+      }, next)
     },
     (next) => {
       // Notify the user of admin password
@@ -294,6 +339,8 @@ createSite.interactive = function(_) {
       if(!value) return false;
       options.title = value;
     });
+  }else{
+    options.title = options.themeName;
   }
   
   if (options.isFlywheel == false) {

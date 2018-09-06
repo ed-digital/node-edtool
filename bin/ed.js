@@ -9,7 +9,8 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const printf = require('printf');
-const findFlywheelSite = require('../src/locate-flywheel')
+const findFlywheelSite = require('../src/locate-flywheel');
+const connectToDocker = require('../src/connect-to-docker');
 
 const commands = {
   "create": {
@@ -42,17 +43,20 @@ const commands = {
       } else {
         let name = argv._[0]
         let rootDir
-        try {
-          rootDir = findFlywheelSite(argv._[0]);
-        } catch (err) {
-          console.log(C.red("Error: "+err.message))
-          return
-        }
         let shortname = name
         const dashes = name.match(/-/g)
         if (name.length > 6 && dashes && dashes.length >= 2) {
           shortname = name.replace(/\b([a-z0-9])[a-z0-9]+\b/g, '$1').replace(/-/g,'')
         }
+        const configName = name.replace(/-|_/g, '')
+
+        try {
+          rootDir = findFlywheelSite(configName);
+        } catch (err) {
+          console.log(C.red("Error: "+err.message))
+          return
+        }
+        
         edwp.createSite.interactive({
           isFlywheel: true,
           flywheelName: name,
@@ -71,16 +75,16 @@ const commands = {
         showHelp('build');
       } else {
         const watch = argv.watch || argv.w
-
+        
+        // Start dev refresh server
+        const RefreshServer = require('../src/dev-refresh-server');
+        const refreshServer = new RefreshServer()
+        
         // Start build
         const Compiler = require('../src/compiler');
         const compiler = new Compiler(process.cwd(), argv.force || argv.f);
-
+        
         if (watch) {
-          // Start dev refresh server
-          const RefreshServer = require('../src/dev-refresh-server');
-          const refreshServer = new RefreshServer()
-
           refreshServer.start()
           compiler.refreshPort = refreshServer.port
           compiler.compile(watch);
@@ -97,7 +101,13 @@ const commands = {
     description: "Jump to a project, or to the current projects theme\nfolder.",
     usage: ["go", "go <projectName>"],
     run: (argv) => {
-      console.log("If you are seeing this, you are missing some code in your .profile file.\nType: "+C.yellow("ed shell-setup")+" to install the relevant function. Be sure to restart your terminal session afterwards.");
+      const dir = path.resolve(`${os.homedir}/${argv._[0]}/app/public/wp-content/themes/`);
+      try{
+        process.chdir(dir)
+        console.log("Did it", process.cwd())
+      }catch(e){
+        console.log('err', e)
+      }
     }
   },
   "shell-setup": {
@@ -115,7 +125,7 @@ const commands = {
           console.log(C.magenta("✔ Updated your ~/"+fileName+" with some cool stuff."));
           return;
         } catch(err) {
-
+          // Debug bash_profile
         }
       }
       // Fallback to .profile if none of the files were found
@@ -134,6 +144,14 @@ const commands = {
     usage: ["ls"],
     run(argv) {
       let projects = edwp.globalConfig.getProjects();
+      
+      if(projects.length === 0){
+        console.log(`\nNo projects found!`);
+        console.log(`- Use ${C.yellow('ed scan')} within a WP dirctory to add more.`);
+        console.log(`- Use ${C.yellow('ed flywheel <name>')} or ${C.yellow('ed create <name>')} to create one\n`);
+        return;
+      }
+      
       console.log(C.green(`\nBelow is a list of sites scanned on your machine:`));
       console.log(C.white(`- Use ${C.yellow('ed scan')} within a WP directory to add more.`));
       console.log(C.white(`- Type ${C.yellow('ed go <project>')} to jump to one of the following projects:`));
@@ -297,6 +315,28 @@ const commands = {
 
       process.stdout.write(path.join(rootDir, 'wp-content/themes', themeName));
       process.exit();
+    }
+  },
+  "connect": {
+    description: "Use a flywheel site cli",
+    usage: ["connect <name>", "connect <name> -fast (or connect <name> -f)"],
+    run: async (argv) => {
+      if(argv._.length === 0){
+        showHelp('connect');
+        return;
+      }
+      if(argv._.length > 1){
+        console.log(C.red('Too many arguments'));
+        showHelp('connect');
+        return;
+      }
+
+      const result = await connectToDocker(argv._[0]);
+      if(result.err){
+        console.log(C.red(err.toString()));
+        process.exit(1);
+      }
+      console.log(C.green("✔ Finished\n"))
     }
   }
 };

@@ -1,7 +1,7 @@
 const path = require('path');
 const exec = require('./exec');
 
-module.exports = function(rootDir) {
+module.exports = function wpcli(rootDir) {
   let pharLoc = path.resolve(__dirname, '../wp-cli.phar');
   let flywheelHost
   return {

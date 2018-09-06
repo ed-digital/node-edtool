@@ -110,14 +110,16 @@ module.exports = {
           conf.mysql.user = val;
         });
         wiz.getText('Enter MySQL Password', conf.mysql.pass || "", (val) => {
+          console.log(C.magenta("\n"+val))
           conf.mysql.pass = val;
           
           return new Promise((resolve, reject) => {
             const mysql = require('mysql');
             const connection = mysql.createConnection({
               host: conf.mysql.host,
+              port: conf.mysql.port,
               user: conf.mysql.user,
-              pass: conf.mysql.pass
+              password: conf.mysql.pass,
             });
             
             console.log(C.magenta("\nTesting connection..."));

@@ -1,5 +1,5 @@
 const wpcli = require('./wpcli');
-
+const FlyCli = require('./fly-wp-cli');
 const fs = require('fs');
 const path = require('path');
 
@@ -24,6 +24,7 @@ module.exports.getSiteRoot = function(dir) {
 
 module.exports.getThemeName = function(root) {
   let result = wpcli(root).runCommandSync('option get template');
+  if (result.code) 
   if(result.code) {
     console.log("Unable to determine current theme");
     process.exit();
@@ -39,3 +40,7 @@ module.exports.getOption = function(root, name) {
   }
   return result.stdout.trim();
 };
+
+function tryFlyCli(root){
+  const flyName = root.search(`[${path.sep}Local Sites${path.sep}*${path.sep}`);
+}

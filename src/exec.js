@@ -33,7 +33,7 @@ module.exports.sync = (cmd, rootDir, env) => {
   });
   return {
     code: proc.status,
-    stdout: proc.stdout.toString(),
+    stdout: proc.stdout && proc.stdout.toString(),
     stderr: ""
   };
-};
+}; 

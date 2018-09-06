@@ -85,6 +85,7 @@ It'll ask you for a project name, and then you're all sorted ;) All it does is c
 ## Development
 
 Clone this project to your local machine and if you've installed node-edtool from npm, uninstall it now.
+<!-- TODO: change to "edwp"? -->
 ```
 npm uninstall -g ed-wp
 ```
