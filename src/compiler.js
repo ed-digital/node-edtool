@@ -311,9 +311,10 @@ class Compiler extends EventEmitter {
 								]
 							],
 							plugins: [
-								require.resolve('babel-plugin-syntax-dynamic-import'),
-								require.resolve('babel-plugin-import-glob'),
-								require.resolve('babel-plugin-transform-class-properties')
+                require.resolve('babel-plugin-syntax-dynamic-import'),
+								require.resolve('babel-plugin-import-glob'),                
+                require.resolve('babel-plugin-transform-class-properties'),
+                require.resolve('babel-plugin-transform-object-rest-spread'),                
 							]
 						}
 					}
@@ -359,6 +360,8 @@ class Compiler extends EventEmitter {
 						test: /\.js$/,
 						loader: require.resolve("babel-loader"),
 						options: {
+              ignore: /(node_modules|\.min\.js)/g,
+
 							presets: [
 								[require.resolve('babel-preset-env'),
 									{
@@ -369,8 +372,10 @@ class Compiler extends EventEmitter {
 								]
 							],
 							plugins: [
+								require.resolve('babel-plugin-syntax-dynamic-import'),                
 								require.resolve('babel-plugin-import-glob'),
-								require.resolve('babel-plugin-transform-class-properties')
+                require.resolve('babel-plugin-transform-class-properties'),
+                require.resolve('babel-plugin-transform-object-rest-spread'),
 							]
 						}
 					}
