@@ -24,8 +24,8 @@ class Compiler extends EventEmitter {
     super();
 
     const cwd = process.cwd()
-    
-    this.siteRoot = cwd
+
+    this.siteRoot = cwd.replace(/\/wp-content\/.+$/, '')
     this.themePath = cwd
     this.assetPath = `${cwd}/assets-src`
     this.outputPath = `${cwd}/assets-built`
@@ -89,9 +89,9 @@ class Compiler extends EventEmitter {
       .filter(file => fs.existsSync(`${this.css.path}/${file}`));
 
 		const compile = (file) => {
-			
+
 			const fullPath = `${this.css.path}/${file}`
-      
+
       console.log(chalk.yellow(`>> Compiling ${this.css.type.toUpperCase()} [${file}]`));
 
 			gulp.src(fullPath)
@@ -130,11 +130,11 @@ class Compiler extends EventEmitter {
 		compileAll();
 
   }
-  
+
 	hash (data) {
 		return crypto.createHash('md5').update(JSON.stringify(data)).digest("hex");
 	}
-	
+
 	compileJS(watch) {
 
 		// "watch" implies a dev environment, no watch means we want the production build
@@ -194,7 +194,7 @@ class Compiler extends EventEmitter {
 		}
 
   }
-  
+
   compileDevJS() {
 
 		console.log(chalk.yellow(">> Compiling JS [development]"));
@@ -209,7 +209,7 @@ class Compiler extends EventEmitter {
 			output: {
 				path: path.join(this.outputPath, '/js'),
 				filename: 'bundle.js',
-				publicPath: path.join(this.outputPath, '/js').replace(this.siteRoot, '/')
+				publicPath: path.join(this.outputPath, '/js/').replace(this.siteRoot, '')
 			},
 			devtool: 'source-map',
 			module: {
@@ -233,9 +233,9 @@ class Compiler extends EventEmitter {
 							],
 							plugins: [
                 require.resolve('babel-plugin-syntax-dynamic-import'),
-								require.resolve('babel-plugin-import-glob'),                
+								require.resolve('babel-plugin-import-glob'),
                 require.resolve('babel-plugin-transform-class-properties'),
-                require.resolve('babel-plugin-transform-object-rest-spread'),                
+                require.resolve('babel-plugin-transform-object-rest-spread'),
 							]
 						}
 					}
@@ -273,7 +273,8 @@ class Compiler extends EventEmitter {
 			],
 			output: {
 				path: path.join(this.outputPath, 'js'),
-				filename: 'bundle.js'
+				filename: 'bundle.js',
+				publicPath: path.join(this.outputPath, '/js/').replace(this.siteRoot, '')
 			},
 			module: {
 				rules: [
@@ -292,7 +293,7 @@ class Compiler extends EventEmitter {
 								]
 							],
 							plugins: [
-								require.resolve('babel-plugin-syntax-dynamic-import'),                
+								require.resolve('babel-plugin-syntax-dynamic-import'),
 								require.resolve('babel-plugin-import-glob'),
                 require.resolve('babel-plugin-transform-class-properties'),
                 require.resolve('babel-plugin-transform-object-rest-spread'),
@@ -339,9 +340,9 @@ function fileExists (dir) {
 function getStyleType(dir) {
   const less = ['less'].find(style => fileExists(`${dir}/${style}`))
   const sass = ['sass', 'scss'].find(style => fileExists(`${dir}/${style}`))
-  
+
   if (sass && less) console.log(`Lol don't use less AND sass you weirdo! 😂`)
-  
+
   if (sass) {
     const sassExt = ['sass', 'scss'].find(ext => fileExists(`${dir}/${sass}/screen.${ext}`))
 
