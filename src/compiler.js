@@ -1,9 +1,5 @@
-const browserify = require('browserify');
-const babelify = require('babelify');
-const requireGlobify = require('require-globify');
 const chalk = require('chalk');
 
-const wp = require('./wp');
 
 const fs = require('fs');
 const path = require('path');
@@ -21,36 +17,25 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 const checkForUpdates = require('./check-for-updates')
 
+
 class Compiler extends EventEmitter {
 
-	constructor(workingDir, skipWordpress) {
-		super();
+	constructor() {
+    super();
 
-		this.skipWordpress = skipWordpress || false;
+    const cwd = process.cwd()
+    
+    this.siteRoot = cwd
+    this.themePath = cwd
+    this.assetPath = `${cwd}/assets-src`
+    this.outputPath = `${cwd}/assets-built`
 
-		if(skipWordpress) {
-			this.siteRoot = process.cwd();
-			this.themeName = "";
-			this.themePath = process.cwd();
-      this.assetPath = `${process.cwd()}/assets-src`;
-		} else {
-	    let pathMatch = process.cwd().match(/wp\-content\/themes\/([A-Z0-9\_\-\.]+)[\/]?$/i);
-			try {
-		    if(pathMatch) {
-		      this.themeName = pathMatch[1];
-		      this.siteRoot = process.cwd().replace(pathMatch[0], '');
-		    } else {
-		      this.siteRoot = wp.getSiteRoot(workingDir);
-		      this.themeName = wp.getThemeName(this.siteRoot);
-		    }
-				this.themePath = path.join(this.siteRoot, 'wp-content/themes', this.themeName);
-		    this.assetPath = path.join(this.themePath, 'assets-src');
-			} catch (err) {
-				this.themeName = 'unknown'
-				this.themePath = workingDir
-				this.assetPath = path.join(this.themePath, 'assets-src')
-			}
-		}
+    if (!fileExists(this.assetPath) && fileExists(`${cwd}/src`)) {
+      this.assetPath = `${cwd}/src`
+      this.outputPath = `${cwd}/dist`
+    }
+
+    this.css = getStyleType(this.assetPath)
 
 		this.errors = {};
 
@@ -83,10 +68,9 @@ class Compiler extends EventEmitter {
 	}
 
 	compile(watch) {
-		this.compileLESS(watch);
-		this.compileSASS(watch);
-		this.compileJS(watch);
-		
+    this.compileCSS(watch)
+    this.compileJS(watch)
+
 		if (watch) {
 			// Check for updates and display a nice message, but only if we're in watch mode (in case it takes a while)
 			checkForUpdates()
@@ -98,40 +82,30 @@ class Compiler extends EventEmitter {
 		return this.compile(true);
 	}
 
-	compileLESS(watch) {
+	compileCSS(watch) {
 
-		let files = ['screen.less', 'print.less'];
-		
-		try {
-			fs.accessSync(this.assetPath+'/less/admin.less')
-			files.push('admin.less')
-		} catch (err) { }
+    const files = [ 'screen', 'print', 'admin' ]
+      .map(file => `${file}.${this.css.ext}`)
+      .filter(file => fs.existsSync(`${this.css.path}/${file}`));
 
-		let compile = (file) => {
+		const compile = (file) => {
 			
-			let fullPath = this.assetPath+'/less/'+file
-			
-			try {
-				fs.accessSync(fullPath)
-			} catch(err) {
-				// File doesn't exist. So what
-				return
-      }
+			const fullPath = `${this.css.path}/${file}`
       
-      console.log(chalk.yellow(">> Compiling LESS"));
+      console.log(chalk.yellow(`>> Compiling ${this.css.type.toUpperCase()} [${file}]`));
 
 			gulp.src(fullPath)
-				.pipe(less())
+				.pipe(this.css.type === 'less' ? less() : sass().on('error', sass.logError))
 				.pipe(autoprefixer())
 				.on('error', (err) => {
 
-					console.log(chalk.black(chalk.bgRed(">> LESS Compiler Error")));
+					console.log(chalk.black(chalk.bgRed(`>> ${this.css.type.toUpperCase()} Compiler Error`)));
 					console.log(err.message);
 
-					this.addError('less', `Failed to compile ${file}`, err.message);
+					this.addError(this.css.type, `Failed to compile ${file}`, err.message);
 
 				})
-				.pipe(gulp.dest('./assets-built/css'))
+				.pipe(gulp.dest(path.join(this.outputPath, '/css').replace(this.siteRoot, './')))
 				.on('end', () => {
 					console.log(chalk.cyan(">> Finished compiling "+file));
 					this.changed('css');
@@ -139,78 +113,24 @@ class Compiler extends EventEmitter {
 
 		};
 
-		let compileAll = () => {
-			this.clearErrors('less');
+		const compileAll = () => {
+			this.clearErrors(this.css.type);
 			for(let file of files) {
 				compile(file);
 			}
 		};
 
 		if(watch) {
-			gulpWatch(this.assetPath+'/less/**/*', () => {
-				console.log(chalk.magenta("------- Detected changes in LESS -------"));
+			gulpWatch(this.css.path+'/**/*', () => {
+				console.log(chalk.magenta(`------- Detected changes in ${this.css.type.toUpperCase()} -------`));
 				compileAll();
 			});
 		}
 
 		compileAll();
 
-	}
-
-	compileSASS(watch) {
-		
-		let files = ['screen.scss'];
-	
-		let compile = (file) => {
-	
-			let fullPath = this.assetPath+'/sass/'+file
-	
-			try {
-				fs.accessSync(fullPath)
-			} catch(err) {
-				// File doesn't exist. So what
-				return
-      }
-      
-      console.log(chalk.yellow(">> Compiling SASS"));
-	
-			gulp.src(fullPath)
-				.pipe(sass().on('error', sass.logError))
-				.pipe(autoprefixer())
-				.on('error', (err) => {
-	
-					console.log(chalk.black(chalk.bgRed(">> SASS Compiler Error")));
-					console.log(err.message);
-	
-					this.addError('sass', `Failed to compile ${file}`, err.message);
-	
-				})
-				.pipe(gulp.dest('./assets-built/css'))
-				.on('end', () => {
-					console.log(chalk.cyan(">> Finished compiling "+file));
-					this.changed('css');
-				});
-	
-		};
-	
-		let compileAll = () => {
-			this.clearErrors('sass');
-			for(let file of files) {
-				compile(file);
-			}
-		};
-	
-		if(watch) {
-			gulpWatch(this.assetPath+'/sass/**/*', () => {
-				console.log(chalk.magenta("------- Detected changes in SASS -------"));
-				compileAll();
-			});
-		}
-	
-		compileAll();
-	
-	}
-	
+  }
+  
 	hash (data) {
 		return crypto.createHash('md5').update(JSON.stringify(data)).digest("hex");
 	}
@@ -287,9 +207,9 @@ class Compiler extends EventEmitter {
 				this.assetPath+'/js/index.js'
 			],
 			output: {
-				path: path.join(this.themePath, '/assets-built/js'),
+				path: path.join(this.outputPath, '/js'),
 				filename: 'bundle.js',
-				publicPath: path.join(this.themePath, '/assets-built/js/').replace(this.siteRoot, '/')
+				publicPath: path.join(this.outputPath, '/js').replace(this.siteRoot, '/')
 			},
 			devtool: 'source-map',
 			module: {
@@ -299,7 +219,8 @@ class Compiler extends EventEmitter {
 						loader: require.resolve("babel-loader"),
 						options: {
 							ignore: /(node_modules|\.min\.js)/g,
-							sourceMaps: true,
+              sourceMaps: true,
+              cacheDirectory: true,
 							presets: [
 								[
 									require.resolve('babel-preset-env'),
@@ -322,7 +243,7 @@ class Compiler extends EventEmitter {
 			},
 			resolve: {
 				alias: {
-					libs: path.join(this.themePath, '/assets-src/js/libs/')
+					libs: path.join(this.assetPath, '/js/libs/')
 				}
 			},
 			plugins: [
@@ -351,7 +272,7 @@ class Compiler extends EventEmitter {
 				this.assetPath+'/js/index.js'
 			],
 			output: {
-				path: path.join(this.themePath, '/assets-built/js'),
+				path: path.join(this.outputPath, 'js'),
 				filename: 'bundle.js'
 			},
 			module: {
@@ -361,7 +282,6 @@ class Compiler extends EventEmitter {
 						loader: require.resolve("babel-loader"),
 						options: {
               ignore: /(node_modules|\.min\.js)/g,
-
 							presets: [
 								[require.resolve('babel-preset-env'),
 									{
@@ -410,6 +330,35 @@ class Compiler extends EventEmitter {
 		}, 300);
 	}
 
+}
+
+function fileExists (dir) {
+  return fs.existsSync(dir)
+}
+
+function getStyleType(dir) {
+  const less = ['less'].find(style => fileExists(`${dir}/${style}`))
+  const sass = ['sass', 'scss'].find(style => fileExists(`${dir}/${style}`))
+  
+  if (sass && less) console.log(`Lol don't use less AND sass you weirdo! 😂`)
+  
+  if (sass) {
+    const sassExt = ['sass', 'scss'].find(ext => fileExists(`${dir}/${sass}/screen.${ext}`))
+
+    return {
+      ext: sassExt,
+      path: `${dir}/${sass}/`,
+      type: sass
+    }
+  }
+
+  if (less) {
+    return {
+      ext: less,
+      path: `${dir}/${less}/`,
+      type: less
+    }
+  }
 }
 
 module.exports = Compiler;
