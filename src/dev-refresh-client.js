@@ -1,6 +1,6 @@
 ;(function devRefreshClient(){
   try {
-  
+
     var tag = false
     var styleTag = false
     var tm = false
@@ -24,7 +24,7 @@
             localStorage.setItem('wasDevReloaded', true)
             window.location.reload()
           }
-  
+
           if (payload.type === 'css') {
             console.log('%cDetected css code changes! Reloading styles.', 'color: #9c55da')
             reloadCSS()
@@ -65,11 +65,11 @@
       var head = document.head || document.getElementsByTagName('head')[0]
       var body = document.body || document.getElementsByTagName('body')[0]
 
-      if (tag) return 
+      if (tag) return
       tag = document.createElement('div')
       tag.className = 'DEV_REFRESH-style-modal'
       tag.textContent = 'Styles were updated'
-      body.append(tag)
+      body.appendChild(tag)
 
       if (styleTag) return
       var styles = ".DEV_REFRESH-style-modal{ padding: 20px; font-size: 16px; font-weight: bold; background: #212121; color: white; position: fixed; display: inline-block; bottom: 20px; right: 0px; transform: translateX(100%); transition: transform 0.2s; z-index: 9999999; }"
@@ -111,5 +111,5 @@
       }).join('&')
     }
   } catch(err) {
-  } 
+  }
 })()
