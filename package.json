@@ -1,6 +1,6 @@
 {
   "name": "edwp",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "ED. Digital's WP Tool",
   "main": "index.js",
   "bin": {
@@ -24,6 +24,7 @@
     "babelify": "^8.0.0",
     "browserify": "^16.2.2",
     "chalk": "^2.4.1",
+    "compare-versions": "^3.4.0",
     "express": "^4.16.3",
     "express-ws": "^4.0.0",
     "gulp": "github:gulpjs/gulp#4.0",
