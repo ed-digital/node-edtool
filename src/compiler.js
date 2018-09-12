@@ -105,7 +105,7 @@ class Compiler extends EventEmitter {
 					this.addError(this.css.type, `Failed to compile ${file}`, err.message);
 
 				})
-				.pipe(gulp.dest(path.join(this.outputPath, '/css').replace(this.siteRoot, './')))
+				.pipe(gulp.dest(path.join(this.outputPath, '/css').replace(this.themePath, './')))
 				.on('end', () => {
 					console.log(chalk.cyan(">> Finished compiling "+file));
 					this.changed('css');
