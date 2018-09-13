@@ -220,7 +220,7 @@ class Compiler extends EventEmitter {
 						options: {
 							ignore: /(node_modules|\.min\.js)/g,
               sourceMaps: true,
-              cacheDirectory: true,
+              // cacheDirectory: true,
 							presets: [
 								[
 									require.resolve('babel-preset-env'),
