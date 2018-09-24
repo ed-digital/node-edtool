@@ -45,10 +45,10 @@
     }
 
     function reloadCSS(){
-      tag.style = `transform: translateX(0);`
+      tag.style = 'transform: translateX(0);'
       clearTimeout(tm)
       tm = setTimeout(function(){
-        tag.style = ``
+        tag.style = ''
       }, 3000)
       var els = toArray(document.querySelectorAll('link[rel="stylesheet"]'))
       els.forEach(function(el) {
