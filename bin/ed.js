@@ -46,6 +46,9 @@ const commands = {
         log(C.red('Too many arguments'));
         showHelp('build');
       } else {
+        const Compiler = require('../src/compiler');
+        const compiler = new Compiler();
+        
         compiler.compile(false)
       }
     }

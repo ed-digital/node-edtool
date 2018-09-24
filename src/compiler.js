@@ -248,7 +248,7 @@ class Compiler extends EventEmitter {
 			},
 			plugins: [
 				new webpack.DefinePlugin({
-					'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)
+          'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)  
 				})
 			]
 		});
