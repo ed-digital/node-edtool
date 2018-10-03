@@ -253,29 +253,19 @@ class Compiler extends Subject {
 
     const hasWarned = hasErrors || (hasWarnings && !this.silent)
 
-
-    const width = process.stdout.columns
-
-    if (hasWarned) console.log('')
-    if (hasErrors){
-      const title = "ERROR"
-      const w = (` ${title} `).length
-      const colW = (width - w)/2
-      console.log(chalk.red(`\n${'='.repeat(colW)} ${title} ${'='.repeat(colW)}\n`))
+    if (hasErrors){      
+      console.log(chalk.bgRed.black(`\n${padStr("ERROR")}`))
       console.log(errors.join('\n\n'))
-      console.log('\n' + chalk.red('='.repeat(width)) + '\n')
+      console.log(chalk.bgRed(padStr()))
     }
     if (hasWarnings) {
       if (this.silent) {
         console.log(chalk.grey(`${warnings.length} warning${warnings.length > 1 ? 's' : ''} hidden by silent flag`))
       } else {
-        const title = "WARNING"
-        const w = (` ${title} `).length
-        const colW = (width - w)/2
-        console.log(chalk.yellow(`\n${'='.repeat(colW)} ${title} ${'='.repeat(colW)}\n`))
+        console.log(chalk.bgYellow.black(`\n${padStr("WARNING")}`))
         console.log(warnings.join('\n\n'))
 
-        console.log('\n' + chalk.yellow('='.repeat(width)) + '\n')
+        console.log(chalk.bgYellow.black(padStr()))
       }
     }  
   
@@ -311,6 +301,15 @@ function getStyleType(dir) {
       type: less
     }
   }
+}
+
+function padStr(str = '', char = ' '){
+  const width = process.stdout.columns
+  const w = str.length
+  const colW = (width - w)/2
+  let result = char.repeat(colW) + str + char.repeat(colW)
+  result = result + char.repeat(width % result.length)
+  return result
 }
 
 module.exports = Compiler;
