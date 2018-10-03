@@ -9,7 +9,7 @@ const commands = {
   "build": {
     description: "Build all theme JS and CSS.",
     usage: ['', 'build'],
-    alias: ['ykwtd', 'dev', 'start', 'you-know-what-to-do', 'start'],
+    alias: ['ykwtd', 'dev', 'start', 'you-know-what-to-do'],
     run: opts => {
       if(opts.args.length !== 0) {
         log(C.red('Too many arguments'));
@@ -21,7 +21,7 @@ const commands = {
         
         // Start build
         const Compiler = require('../src/compiler');
-        const compiler = new Compiler();
+        const compiler = new Compiler(opts.opts);
         
         refreshServer.start()
         compiler.refreshPort = refreshServer.port
@@ -39,15 +39,16 @@ const commands = {
   },
   "prod": {
     description: "Build all theme JS and CSS for production.",
-    usage: ["prod"],
+    usage: ["prod", "prod -s || --silent (hide warnings)"],
     alias: ['production'],
     run: opts => {
       if(opts.args.length !== 0) {
         log(C.red('Too many arguments'));
         showHelp('build');
       } else {
+        
         const Compiler = require('../src/compiler');
-        const compiler = new Compiler();
+        const compiler = new Compiler(opts.opts);
         
         compiler.compile(false)
       }
@@ -62,10 +63,9 @@ const commands = {
 };
 
 function showHelp(singleCmd) {
-  let title = "ED. WordPress Tool!";
-  log('\n' + C.red("-".repeat(70) + "\n" + " ".repeat(70/2-title.length/2) + title + "\n" + "-".repeat(70)));
+  log(C.grey(`\nCOMPIL${C.white('ED.')}\n`));
   
-  let leftWidth = 20;
+  let leftWidth = 10;
 
   const showCmd = (name, cmd) => {
     const newLines = cmd.description.split(/\n/g);
@@ -104,11 +104,14 @@ function showHelp(singleCmd) {
 const argv = require('minimist')(process.argv.slice(2));
 const {_, ...opts} = argv
 const [cmdName, ...args] = _;
+
 const cmdOpts = {
   name: cmdName,
   args: args,
-  opts: opts
+  opts: transformOpts(opts)
 }
+
+
 
 // Attempting to run the given command
 const cmd = getCmd(cmdName)
@@ -139,4 +142,10 @@ function getCmd(givenName){
 
 function spreadInto(fn){
   return arr => fn(...arr)
+}
+
+function transformOpts(opts){
+  return {
+    silent: opts.s || opts.silent
+  }
 }

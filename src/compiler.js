@@ -1,11 +1,10 @@
 const chalk = require('chalk');
 
-
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto')
 
-const EventEmitter = require('events').EventEmitter;
+const Subject = require('./Subject');
 
 const gulp = require('gulp');
 const gulpWatch = require('gulp-watch');
@@ -16,11 +15,12 @@ const sourcemaps = require('gulp-sourcemaps');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 const checkForUpdates = require('./check-for-updates')
+const formatWebpack = require('./formatWebpack')
 
 
-class Compiler extends EventEmitter {
+class Compiler extends Subject {
 
-	constructor() {
+	constructor(opts) {
     super();
 
     const cwd = process.cwd()
@@ -35,6 +35,7 @@ class Compiler extends EventEmitter {
       this.outputPath = `${cwd}/dist`
     }
 
+    this.silent = opts.silent
     this.css = getStyleType(this.assetPath)
 
 		this.errors = {};
@@ -69,7 +70,11 @@ class Compiler extends EventEmitter {
 
 	compile(watch) {
     this.compileCSS(watch)
-    this.compileJS(watch)
+    if (watch) {
+      this.watchJS()
+    } else {
+      this.compileJS()
+    }
 
 		if (watch) {
 			// Check for updates and display a nice message, but only if we're in watch mode (in case it takes a while)
@@ -133,66 +138,76 @@ class Compiler extends EventEmitter {
 
 	hash (data) {
 		return crypto.createHash('md5').update(JSON.stringify(data)).digest("hex");
-	}
+  }
+
+  watchJS () {
+
+    const compiler = this.compileDevJS()
+
+    let watching
+
+    this.on('done', (stats) => {
+			if (stats.hasErrors()) {
+
+        this.logErrors(stats)
+        
+			} else {
+        console.log(chalk.cyan(">> JS compilation completed in "+(stats.endTime - stats.startTime)+"ms"));
+				this.changed('js');
+			}
+    })
+
+    const onEnd = (_, stats) => this.emit('done', stats)
+
+    compiler.hooks.invalid.tap('onInvalid', fileName => {
+			fileName = fileName.replace(this.themePath, '')
+			console.log(chalk.green(">> Detected changes: ") + chalk.magenta(fileName))
+    })
+     
+    const runWatch = () => {
+      watching = compiler.watch({}, onEnd)
+    }
+
+    compiler.hooks.done.tap("onWatchEnd", () => {
+      if (!watching) {
+        runWatch()
+      }
+    })
+
+    runWatch()
+
+    // Also watch for new files to auto-include
+    let hash = null
+    setInterval(() => {
+      fs.readdir(this.assetPath+'/js/widgets', (err, files) => {
+        const newHash = this.hash(files)
+        if (hash !== null && hash != newHash) {
+          console.log(chalk.green(">> Detected change in file list, recompiling"))
+          watching.invalidate()
+        }
+        hash = newHash
+      })
+    }, 500)
+  }
+
+  compileJS () {
+
+  }
 
 	compileJS(watch) {
 
-		// "watch" implies a dev environment, no watch means we want the production build
-		const compiler = watch
-			? this.compileDevJS()
-			: this.compileProductionJS();
+    // "watch" implies a dev environment, no watch means we want the production build
+    const compiler = this.compileProductionJS();
 
-		compiler.plugin("after-emit", (compilation, callback) => {
-			callback()
-		})
-
-		compiler.plugin("done", (stats) => {
+		this.on('done', (stats) => {
 			if (stats.hasErrors()) {
-				console.log(chalk.red(">> Error Compiling JS:"));
-				const info = stats.toJson()
-				if (info.errors && info.errors.length) {
-					console.error(info.errors[0])
-				}
+        this.logErrors(stats)
 			} else {
-				console.log(chalk.cyan(">> JS compilation completed in "+(stats.endTime - stats.startTime)+"ms"));
-				this.changed('js');
+        console.log(chalk.cyan(">> JS compilation completed in "+(stats.endTime - stats.startTime)+"ms"));
 			}
-		})
-
-		compiler.plugin("invalid", (fileName) => {
-			fileName = fileName.replace(this.themePath, '')
-			console.log(chalk.green(">> Detected changes: ") + chalk.magenta(fileName))
-		})
-
-		if (watch) {
-			let watching
-			const runWatch = () => {
-				watching = compiler.watch({}, () => {})
-			}
-			compiler.plugin("done", () => {
-				if (!watching) {
-					runWatch()
-				}
-			})
-
-			runWatch()
-
-			// Also watch for new files to auto-include
-			let hash = null
-			setInterval(() => {
-				fs.readdir(this.assetPath+'/js/widgets', (err, files) => {
-					const newHash = this.hash(files)
-					if (hash !== null && hash != newHash) {
-						console.log(chalk.green(">> Detected change in file list, recompiling"))
-						watching.invalidate()
-					}
-					hash = newHash
-				})
-			}, 500)
-		} else {
-			compiler.run(() => {})
-		}
-
+    })
+  
+    compiler.run(() => {})
   }
 
   compileDevJS() {
@@ -200,130 +215,21 @@ class Compiler extends EventEmitter {
 		console.log(chalk.yellow(">> Compiling JS [development]"));
 
 		const webpack = require('webpack')
+    const config = require('./webpack.dev.config')(this)
 
-		return webpack({
-			entry: [
-				require.resolve('./dev-refresh-client'),
-				this.assetPath+'/js/index.js'
-			],
-			output: {
-				path: path.join(this.outputPath, '/js'),
-				filename: 'bundle.js',
-				publicPath: path.join(this.outputPath, '/js/').replace(this.siteRoot, '')
-			},
-			devtool: 'source-map',
-			module: {
-				rules: [
-					{
-						test: /\.js$/,
-						loader: require.resolve("babel-loader"),
-						options: {
-							ignore: /(node_modules|\.min\.js)/g,
-              sourceMaps: true,
-              // cacheDirectory: true,
-							presets: [
-								[
-									require.resolve('babel-preset-env'),
-									{
-										targets: {
-											browsers: ["last 10 versions", "ie > 10"]
-										}
-									}
-								]
-							],
-							plugins: [
-                require.resolve('babel-plugin-syntax-dynamic-import'),
-								require.resolve('babel-plugin-import-glob'),
-                require.resolve('babel-plugin-transform-class-properties'),
-                require.resolve('babel-plugin-transform-object-rest-spread'),
-							]
-						}
-					}
-				]
-			},
-			resolve: {
-				alias: {
-					libs: path.join(this.assetPath, '/js/libs/')
-				}
-			},
-			plugins: [
-				new webpack.DefinePlugin({
-          'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)  
-				})
-			]
-		});
-		// }, (err, stats) => {
-		// 	if (err) {
-		// 		console.error(err.stack || err);
-		// 		if (err.details) console.error(err.details);
-		// 		return;
-		// 	}
-		// })
+		return webpack(config);
 	}
 
 	compileProductionJS() {
 
 		console.log(chalk.yellow(">> Compiling JS [production]"));
 
-		const webpack = require('webpack')
+    const webpack = require('webpack')
+    const config = require('./webpack.prod.config')(this)
 
-		return webpack({
-			entry: [
-				this.assetPath+'/js/index.js'
-			],
-			output: {
-				path: path.join(this.outputPath, 'js'),
-				filename: 'bundle.js',
-				publicPath: path.join(this.outputPath, '/js/').replace(this.siteRoot, '')
-			},
-			module: {
-				rules: [
-					{
-						test: /\.js$/,
-						loader: require.resolve("babel-loader"),
-						options: {
-              ignore: /(node_modules|\.min\.js)/g,
-							presets: [
-								[
-									require.resolve('babel-preset-env'),
-									{
-										targets: {
-											browsers: ["last 10 versions", "ie > 10"]
-										}
-									}
-								]
-							],
-							plugins: [
-								require.resolve('babel-plugin-syntax-dynamic-import'),
-								require.resolve('babel-plugin-import-glob'),
-                require.resolve('babel-plugin-transform-class-properties'),
-                require.resolve('babel-plugin-transform-object-rest-spread'),
-							]
-						}
-					}
-				]
-      },
-			plugins: [
-				new UglifyJsPlugin({
-          parallel: 8,
-          sourceMap: true,
-          uglifyOptions: {
-            mangle: true,
-            compress : true
-          }
-        })
-				/*
-				new webpack.DefinePlugin({
-					'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)
-				})
-				*/
-			]
-		}, (err, stats) => {
-			if (err) {
-				console.error(err.stack || err);
-				if (err.details) console.error(err.details);
-				return;
-			}
+		return webpack(config, (err, stats) => {
+      this.emit('done', stats)
+      const hasErrors = this.logErrors(stats)
 		})
 	}
 
@@ -337,7 +243,44 @@ class Compiler extends EventEmitter {
 		this._changeDebounce = setTimeout(() => {
 			this.emit('changed', change);
 		}, 300);
-	}
+  }
+  
+  logErrors(stats){
+    const {errors, warnings} = formatWebpack(stats.toJson({}, true))
+
+    const hasErrors = errors.length
+    const hasWarnings = warnings.length
+
+    const hasWarned = hasErrors || (hasWarnings && !this.silent)
+
+
+    const width = process.stdout.columns
+
+    if (hasWarned) console.log('')
+    if (hasErrors){
+      const title = "ERROR"
+      const w = (` ${title} `).length
+      const colW = (width - w)/2
+      console.log(chalk.red(`\n${'='.repeat(colW)} ${title} ${'='.repeat(colW)}\n`))
+      console.log(errors.join('\n\n'))
+      console.log('\n' + chalk.red('='.repeat(width)) + '\n')
+    }
+    if (hasWarnings) {
+      if (this.silent) {
+        console.log(chalk.grey(`${warnings.length} warning${warnings.length > 1 ? 's' : ''} hidden by silent flag`))
+      } else {
+        const title = "WARNING"
+        const w = (` ${title} `).length
+        const colW = (width - w)/2
+        console.log(chalk.yellow(`\n${'='.repeat(colW)} ${title} ${'='.repeat(colW)}\n`))
+        console.log(warnings.join('\n\n'))
+
+        console.log('\n' + chalk.yellow('='.repeat(width)) + '\n')
+      }
+    }  
+  
+    return hasWarned
+  }
 
 }
 
