@@ -5,15 +5,18 @@
     var styleTag = false
     var tm = false
 
-    window.addEventListener('load', function() {
-      addTag()
-    })
+    
 
     if (localStorage.getItem('wasDevReloaded')) {
       console.log('%cPage was reloaded automatically because of a code change.', 'color: #9c55da')
       localStorage.removeItem('wasDevReloaded')
     }
     if (window.location.host.match(/(\.dev|\.local)$/) && window.WebSocket) {
+
+      window.addEventListener('load', function() {
+        addTag()
+      })
+
       var ws = new WebSocket('ws://127.0.0.1:' + process.env.REFRESH_PORT)
       ws.addEventListener('message', function(msg){
         var payload = json_parse(msg.data) || { type: 'js', action: 'reload' }
@@ -35,7 +38,7 @@
         console.log('%cError connecting to dev reload server, you may need to refresh manually!', 'color: #da6955')
       }
     } else {
-      console.warn('Rebuild project in production mode')
+      // console.warn('Rebuild project in production mode')
     }
 
     function json_parse(str){

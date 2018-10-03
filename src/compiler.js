@@ -284,7 +284,8 @@ class Compiler extends EventEmitter {
 						options: {
               ignore: /(node_modules|\.min\.js)/g,
 							presets: [
-								[require.resolve('babel-preset-env'),
+								[
+									require.resolve('babel-preset-env'),
 									{
 										targets: {
 											browsers: ["last 10 versions", "ie > 10"]
@@ -301,9 +302,16 @@ class Compiler extends EventEmitter {
 						}
 					}
 				]
-			},
+      },
 			plugins: [
-				new UglifyJsPlugin()
+				new UglifyJsPlugin({
+          parallel: 8,
+          sourceMap: true,
+          uglifyOptions: {
+            mangle: true,
+            compress : true
+          }
+        })
 				/*
 				new webpack.DefinePlugin({
 					'process.env.REFRESH_PORT': JSON.stringify(this.refreshPort || 0)
