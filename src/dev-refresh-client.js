@@ -38,7 +38,7 @@
         console.log('%cError connecting to dev reload server, you may need to refresh manually!', 'color: #da6955')
       }
     } else {
-      // console.warn('Rebuild project in production mode')
+      console.warn('Project should be rebuilt in production mode')
     }
 
     function json_parse(str){
