@@ -5,10 +5,7 @@ const webpack = require('webpack')
 module.exports = function base (self) {
   // `this` is the compiler
   return {
-    entry: [
-      require.resolve('./dev-refresh-client'),
-      self.assetPath+'/js/index.js'
-    ],
+    entry: self.assetPath+'/js/index.js',
     output: {
       path: path.join(self.outputPath, '/js'),
       filename: 'bundle.js',

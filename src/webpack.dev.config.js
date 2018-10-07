@@ -9,6 +9,10 @@ module.exports = function dev (self) {
   return merge(
     base(self),
     {
+      entry: [
+        require.resolve('./dev-refresh-client'),
+        self.assetPath+'/js/index.js'
+      ],
       watch: true,
       mode,
       plugins: [
