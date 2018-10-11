@@ -10,7 +10,7 @@ module.exports = async function () {
 
   const isGit = fs.existsSync(`${__dirname}/../.git`)
 
-  console.log('Installed through GIT')
+  console.log(`Installed through ${isGit ? 'GIT' : 'NPM'}`)
   console.log(`Current version ${chalk.yellow(pkg.version)}`)
 
   const currentVersion = pkg.version
