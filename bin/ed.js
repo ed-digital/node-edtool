@@ -4,14 +4,19 @@ const C = require('chalk');
 const log = console.log
 
 const starterTheme = require('../src/starter-theme')
+const checkForUpdates = require('../src/check-for-updates')
 
 const commands = {
   "build": {
     description: "Build all theme JS and CSS.",
     usage: ['', 'build'],
     alias: ['ykwtd', 'dev', 'start', 'you-know-what-to-do'],
-    run: opts => {
-      if(opts.args.length !== 0) {
+    run: cmd => {
+      if (cmd.opts.version) {
+        showVersion()
+        return 
+      }
+      if(cmd.args.length !== 0) {
         log(C.red('Too many arguments'));
         showHelp('build');
       } else {      
@@ -21,7 +26,7 @@ const commands = {
         
         // Start build
         const Compiler = require('../src/compiler');
-        const compiler = new Compiler(opts.opts);
+        const compiler = new Compiler(cmd.opts);
         
         refreshServer.start()
         compiler.refreshPort = refreshServer.port
@@ -59,11 +64,21 @@ const commands = {
     alias: ['?'],
     usage: [ 'help', 'help <cmd> (for specific command)' ],
     run: argv => showHelp(argv.args[0])
+  },
+  "version": {
+    description: 'Shows edwp version',
+    alias: ['v'],
+    usage: ['version', 'v', '-v'],
+    run: showVersion
   }
 };
 
+function showVersion(){
+  checkForUpdates()
+}
+
 function showHelp(singleCmd) {
-  log(C.grey(`\nCOMPIL${C.white('ED.')}\n`));
+  log(`\n${C.bgRed.black('COMPIL')}${C.bgBlack.white('ED.')}\n`);
   
   let leftWidth = 10;
 
@@ -146,6 +161,8 @@ function spreadInto(fn){
 
 function transformOpts(opts){
   return {
+    ...opts,
+    version: opts.v || opts.version,
     silent: opts.s || opts.silent
   }
 }
