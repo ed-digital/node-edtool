@@ -6,7 +6,7 @@ const pkg = require('../package.json')
 
 const log = str => console.log(chalk.magenta(str))
 
-module.exports = async function () {
+module.exports.checkForUpdates = async function () {
 
   const isGit = fs.existsSync(`${__dirname}/../.git`)
 
@@ -40,8 +40,29 @@ module.exports = async function () {
   }
 }
 
+module.exports.checkForUpdatesInline = async function () {
+  const currentVersion = pkg.version
+
+  const data = await npmGetDetails('edwp')
+
+  try {
+    const latestVersion = data['dist-tags'].latest
+
+    if (latestVersion && currentVersion && compareVersions(latestVersion, currentVersion) > 0) {
+      log("A new version of this tool is out!\n- Version "+chalk.yellow(latestVersion)+" is available.")
+
+      if (isGit) {
+        log("- Pull latest changes to upgrade!")
+      } else {
+        log("- Type " + chalk.yellow('npm install -g edwp') + " to upgrade!")
+      }
+    }
+
+  } catch (err) {}
+}
+
 function npmGetDetails (name) {
   return new Promise(
-    resolve => npmAPI.getdetails('edwp', data => resolve(data))
-    )
+    resolve => npmAPI.getdetails(name, data => resolve(data))
+  )
 }

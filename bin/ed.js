@@ -4,7 +4,7 @@ const C = require('chalk');
 const log = console.log
 
 const starterTheme = require('../src/starter-theme')
-const checkForUpdates = require('../src/check-for-updates')
+const {checkForUpdates} = require('../src/check-for-updates')
 
 const commands = {
   "build": {

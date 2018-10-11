@@ -14,7 +14,7 @@ const autoprefixer = require('gulp-autoprefixer');
 const sourcemaps = require('gulp-sourcemaps');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
-const checkForUpdates = require('./check-for-updates')
+const {checkForUpdatesInline} = require('./check-for-updates')
 const formatWebpack = require('./formatWebpack')
 
 
@@ -78,7 +78,7 @@ class Compiler extends Subject {
 
 		if (watch) {
 			// Check for updates and display a nice message, but only if we're in watch mode (in case it takes a while)
-			checkForUpdates()
+			checkForUpdatesInline()
 		}
 		// this.compileHTML(watch);
 	}
