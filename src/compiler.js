@@ -99,9 +99,11 @@ class Compiler extends Subject {
 
       console.log(chalk.yellow(`>> Compiling ${this.css.type.toUpperCase()} [${file}]`));
 
-			gulp.src(fullPath)
-				.pipe(this.css.type === 'less' ? less() : sass().on('error', sass.logError))
+      gulp.src(fullPath)
+        .pipe(sourcemaps.init())
+        .pipe(this.css.type === 'less' ? less() : sass().on('error', sass.logError))
 				.pipe(autoprefixer())
+        .pipe(sourcemaps.write('.'))
 				.on('error', (err) => {
 
 					console.log(chalk.black(chalk.bgRed(`>> ${this.css.type.toUpperCase()} Compiler Error`)));
