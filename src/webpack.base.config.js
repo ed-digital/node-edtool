@@ -33,6 +33,7 @@ module.exports = function base (self) {
             ],
             plugins: [
               require.resolve('babel-plugin-import-glob'),
+              require.resolve('@babel/plugin-proposal-class-properties')
             ]
           }
         }
