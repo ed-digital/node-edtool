@@ -11,7 +11,7 @@
       console.log('%cPage was reloaded automatically because of a code change.', 'color: #9c55da')
       localStorage.removeItem('wasDevReloaded')
     }
-    if (window.location.host.match(/(\.dev|\.local)$/) && window.WebSocket) {
+    if (window.location.host.match(/(\.dev|\.local)$|localhost/) && window.WebSocket) {
 
       window.addEventListener('load', function() {
         addTag()

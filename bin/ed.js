@@ -26,11 +26,14 @@ const commands = {
         
         // Start build
         const Compiler = require('../src/compiler');
-        const compiler = new Compiler(cmd.opts);
+        const compiler = new Compiler({
+          ...cmd.opts,
+          mode: 'development'
+        });
         
         refreshServer.start()
         compiler.refreshPort = refreshServer.port
-        compiler.compile(true);
+        compiler.compile();
         compiler.on('changed', (type) => {
           refreshServer.triggerRefresh(type)
         })
@@ -53,9 +56,12 @@ const commands = {
       } else {
         
         const Compiler = require('../src/compiler');
-        const compiler = new Compiler(opts.opts);
+        const compiler = new Compiler({
+          ...opts.opts,
+          mode: 'production'
+        });
         
-        compiler.compile(false)
+        compiler.compile()
       }
     }
   },

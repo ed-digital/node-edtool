@@ -12,10 +12,12 @@ const less = require('gulp-less');
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
 const sourcemaps = require('gulp-sourcemaps');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 const {checkForUpdatesInline} = require('./check-for-updates')
 const formatWebpack = require('./formatWebpack')
+
+const DEV = 'development'
+const PROD = 'production'
 
 
 class Compiler extends Subject {
@@ -24,6 +26,8 @@ class Compiler extends Subject {
     super();
 
     const cwd = process.cwd()
+
+    this.mode = opts.mode
 
     this.siteRoot = cwd.replace(/\/wp-content\/.+$/, '')
     this.themePath = cwd
@@ -68,15 +72,15 @@ class Compiler extends Subject {
 		return errs;
 	}
 
-	compile(watch) {
-    this.compileCSS(watch)
-    if (watch) {
+	compile() {
+    this.compileCSS()
+    if (this.mode === DEV) {
       this.watchJS()
     } else {
       this.compileJS()
     }
 
-		if (watch) {
+		if (this.mode === DEV) {
 			// Check for updates and display a nice message, but only if we're in watch mode (in case it takes a while)
 			checkForUpdatesInline()
 		}
@@ -84,10 +88,10 @@ class Compiler extends Subject {
 	}
 
 	watch() {
-		return this.compile(true);
+		return this.compile();
 	}
 
-	compileCSS(watch) {
+	compileCSS() {
 
     const files = [ 'screen', 'print', 'admin' ]
       .map(file => `${file}.${this.css.ext}`)
@@ -127,7 +131,7 @@ class Compiler extends Subject {
 			}
 		};
 
-		if(watch) {
+		if(this.mode === DEV) {
 			gulpWatch(this.css.path+'/**/*', () => {
 				console.log(chalk.magenta(`------- Detected changes in ${this.css.type.toUpperCase()} -------`));
 				compileAll();
@@ -179,26 +183,24 @@ class Compiler extends Subject {
     runWatch()
 
     // Also watch for new files to auto-include
-    let hash = null
-    setInterval(() => {
-      fs.readdir(this.assetPath+'/js/widgets', (err, files) => {
-        const newHash = this.hash(files)
-        if (hash !== null && hash != newHash) {
-          console.log(chalk.green(">> Detected change in file list, recompiling"))
-          watching.invalidate()
-        }
-        hash = newHash
-      })
-    }, 500)
+    if (fs.existsSync('/js/widgets')) {
+      console.log('file exists222')
+      let hash = null
+      setInterval(() => {
+        fs.readdir(this.assetPath+'/js/widgets', (err, files) => {
+          const newHash = this.hash(files)
+          if (hash !== null && hash != newHash) {
+            console.log(chalk.green(">> Detected change in file list, recompiling"))
+            watching.invalidate()
+          }
+          hash = newHash
+        })
+      }, 500)
+    }
   }
 
-  compileJS () {
+	compileJS() {
 
-  }
-
-	compileJS(watch) {
-
-    // "watch" implies a dev environment, no watch means we want the production build
     const compiler = this.compileProductionJS();
 
 		this.on('done', (stats) => {
@@ -217,7 +219,7 @@ class Compiler extends Subject {
 		console.log(chalk.yellow(">> Compiling JS [development]"));
 
 		const webpack = require('webpack')
-    const config = require('./webpack.dev.config')(this)
+    const config = require('./webpack.config')(this)
 
 		return webpack(config);
 	}
@@ -227,7 +229,7 @@ class Compiler extends Subject {
 		console.log(chalk.yellow(">> Compiling JS [production]"));
 
     const webpack = require('webpack')
-    const config = require('./webpack.prod.config')(this)
+    const config = require('./webpack.config')(this)
 
 		return webpack(config, (err, stats) => {
       this.emit('done', stats)
