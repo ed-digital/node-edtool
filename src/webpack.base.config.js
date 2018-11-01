@@ -1,8 +1,16 @@
 const path = require('path');
-const webpack = require('webpack')
-
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 
 module.exports = function base (self) {
+
+  const POST_CSS_OPTS = {
+    ident: 'postcss',
+    sourceMap: true,
+    plugins: (loader) => [
+      require('autoprefixer')(),
+    ]
+  }
+
   // `this` is the compiler
   return {
     entry: self.assetPath+'/js/index.js',
@@ -33,10 +41,29 @@ module.exports = function base (self) {
             ],
             plugins: [
               require.resolve('babel-plugin-import-glob'),
-              require.resolve('@babel/plugin-proposal-class-properties')
+              require.resolve('@babel/plugin-proposal-class-properties'),
+              require.resolve('@babel/plugin-syntax-dynamic-import')
             ]
           }
-        }
+        },
+        {
+          test: /\.less$/,
+          use: [
+            { loader: MiniCssExtractPlugin.loader, },
+            { loader: require.resolve('css-loader'), options: {importLoaders: 2, sourceMap: true} },
+            { loader: require.resolve('postcss-loader'), options: POST_CSS_OPTS },
+            { loader: require.resolve('less-loader'), options: {sourceMap: true} }
+          ]
+        },
+        {
+          test: /\.(sa|sc|c)ss$/,
+          use: [
+            { loader: MiniCssExtractPlugin.loader },
+            { loader: require.resolve('css-loader'), options: {importLoaders: 2, sourceMap: true}},
+            { loader: require.resolve('postcss-loader'), options: POST_CSS_OPTS },
+            { loader: require.resolve('sass-loader'), options: {sourceMap: true}}
+          ]
+        },
       ]
     },
     resolve: {
@@ -44,5 +71,10 @@ module.exports = function base (self) {
         libs: path.join(self.assetPath, '/js/libs/')
       }
     },
+    plugins: [
+      new MiniCssExtractPlugin({
+        filename: '[name].bundle.css',
+      }),
+    ]
   }
 }
