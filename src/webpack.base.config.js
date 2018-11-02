@@ -25,7 +25,7 @@ module.exports = function base (self) {
           test: /\.js$/,
           loader: require.resolve("babel-loader"),
           options: {
-            ignore: [/node_modules\/(?!gsap)/, /\.min\.js/],
+            ignore: [/node_modules[\/|\\](?!gsap)/, /\.min\.js/],
             sourceMaps: true,
             presets: [
               [
