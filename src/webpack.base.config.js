@@ -1,7 +1,6 @@
-const path = require('path');
-const MiniCssExtractPlugin = require("mini-css-extract-plugin")
-
 module.exports = function base (self) {
+  const path = require('path')
+  const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 
   const POST_CSS_OPTS = {
     ident: 'postcss',
@@ -10,8 +9,7 @@ module.exports = function base (self) {
       require('autoprefixer')(),
     ]
   }
-
-  // `this` is the compiler
+  
   return {
     entry: self.assetPath+'/js/index.js',
     output: {
@@ -20,13 +18,14 @@ module.exports = function base (self) {
       publicPath: path.join(self.outputPath, '/js/').replace(self.siteRoot, '')
     },
     devtool: 'source-map',
+    mode: self.mode,
     module: {
       rules: [
         {
           test: /\.js$/,
           loader: require.resolve("babel-loader"),
           options: {
-            ignore: [/node_modules\/(?!gsap)/, /\.min\.js/],
+            ignore: [/node_modules[\/|\\](?!gsap)/, /\.min\.js/],
             sourceMaps: true,
             presets: [
               [
