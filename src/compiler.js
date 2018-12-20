@@ -12,6 +12,7 @@ const less = require('gulp-less');
 const sass = require('gulp-sass');
 const autoprefixer = require('gulp-autoprefixer');
 const sourcemaps = require('gulp-sourcemaps');
+const cssnano = require('gulp-cssnano')
 
 const {checkForUpdatesInline} = require('./check-for-updates')
 const formatWebpack = require('./formatWebpack')
@@ -29,17 +30,18 @@ class Compiler extends Subject {
 
     this.mode = opts.mode
 
-    this.siteRoot = cwd.replace(/\/wp-content\/.+$/, '')
+    this.siteRoot = cwd.replace(/[\/|\\]wp-content[\/|\\].+$/, '')
     this.themePath = cwd
-    this.assetPath = `${cwd}/assets-src`
-    this.outputPath = `${cwd}/assets-built`
+    this.assetPath = `${cwd}${path.sep}assets-src`
+    this.outputPath = `${cwd}${path.sep}assets-built`
 
-    if (!fileExists(this.assetPath) && fileExists(`${cwd}/src`)) {
-      this.assetPath = `${cwd}/src`
-      this.outputPath = `${cwd}/dist`
+    if (!fileExists(this.assetPath) && fileExists(`${cwd}${path.sep}src`)) {
+      this.assetPath = `${cwd}${path.sep}src`
+      this.outputPath = `${cwd}${path.sep}dist`
     }
 
     this.silent = opts.silent
+    this.analyze = opts.analyze
     this.css = getStyleType(this.assetPath)
 
 		this.errors = {};
@@ -72,15 +74,15 @@ class Compiler extends Subject {
 		return errs;
 	}
 
-	compile() {
-    this.compileCSS()
+	async compile() {
+    if (this.css) this.compileCSS()
     if (this.mode === DEV) {
       this.watchJS()
     } else {
       this.compileJS()
     }
 
-		if (this.mode === DEV) {
+		if (this.mode === DEV && await hasInternet()) {
 			// Check for updates and display a nice message, but only if we're in watch mode (in case it takes a while)
 			checkForUpdatesInline()
 		}
@@ -93,7 +95,7 @@ class Compiler extends Subject {
 
 	compileCSS() {
 
-    const files = [ 'screen', 'print', 'admin' ]
+    const files = [ 'screen', 'print', 'admin', 'content-blocks' ]
       .map(file => `${file}.${this.css.ext}`)
       .filter(file => fs.existsSync(`${this.css.path}/${file}`));
 
@@ -103,11 +105,15 @@ class Compiler extends Subject {
 
       console.log(chalk.yellow(`>> Compiling ${this.css.type.toUpperCase()} [${file}]`));
 
-      gulp.src(fullPath)
+      const plumbing = gulp.src(fullPath)
         .pipe(sourcemaps.init())
         .pipe(this.css.type === 'less' ? less() : sass().on('error', sass.logError))
-				.pipe(autoprefixer())
-        .pipe(sourcemaps.write('.'))
+        .pipe(autoprefixer())
+      
+      // Optionally minify css if in production mode
+      if (this.mode === PROD) plumbing.pipe(cssnano())
+
+      plumbing.pipe(sourcemaps.write('.'))
 				.on('error', (err) => {
 
 					console.log(chalk.black(chalk.bgRed(`>> ${this.css.type.toUpperCase()} Compiler Error`)));
@@ -314,6 +320,15 @@ function padStr(str = '', char = ' '){
   let result = char.repeat(colW) + str + char.repeat(colW)
   result = result + char.repeat(width % result.length)
   return result
+}
+
+function hasInternet () {
+  return new Promise(resolve => {
+    require('dns').lookup(
+      'google.com',
+      err => resolve(!(err && err.code === 'ENOTFOUND'))
+    )
+  })
 }
 
 module.exports = Compiler;

@@ -43,9 +43,9 @@ module.exports.checkForUpdates = async function () {
 module.exports.checkForUpdatesInline = async function () {
   const currentVersion = pkg.version
 
-  const data = await npmGetDetails('edwp')
-
+  
   try {
+    const data = await npmGetDetails('edwp')
     const latestVersion = data['dist-tags'].latest
 
     if (latestVersion && currentVersion && compareVersions(latestVersion, currentVersion) > 0) {
@@ -59,10 +59,13 @@ module.exports.checkForUpdatesInline = async function () {
     }
 
   } catch (err) {}
+
 }
 
 function npmGetDetails (name) {
   return new Promise(
-    resolve => npmAPI.getdetails(name, data => resolve(data))
-  )
+    resolve => {
+      npmAPI.getdetails(name, data => resolve(data))
+    }
+  ).catch(err => false)
 }

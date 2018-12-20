@@ -4,6 +4,8 @@
     var tag = false
     var styleTag = false
     var tm = false
+    var action = false
+    var queue = false
 
     
 
@@ -25,13 +27,34 @@
           if (payload.type === 'js') {
             console.log('%cDetected js code changes! Reloading page.', 'color: #9c55da')
             localStorage.setItem('wasDevReloaded', true)
-            window.location.reload()
+
+            action = {
+              type: payload.type,
+              fn: function () {window.location.reload()}
+            }
           }
 
           if (payload.type === 'css') {
             console.log('%cDetected css code changes! Reloading styles.', 'color: #9c55da')
-            reloadCSS()
+
+            if (!action || action.type !== 'js') {
+              action = {
+                type: payload.type,
+                fn: function () {
+                  reloadCSS()
+                }
+              }
+            }
           }
+
+          if (queue) return
+
+          queue = nextFrame().then(
+            function () {
+              queue = false
+              action.fn()  
+            }
+          )
         }
       })
       ws.onerror = function() {
@@ -64,6 +87,14 @@
           el.setAttribute('href', url + createQuery(query))
         }
       })
+    }
+
+    function nextFrame () {
+      return new Promise(
+        function (resolve) {
+          window.requestAnimationFrame(resolve)
+        }
+      )
     }
 
     function addTag(){

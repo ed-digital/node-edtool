@@ -5,9 +5,9 @@ module.exports = function base (self) {
   const POST_CSS_OPTS = {
     ident: 'postcss',
     sourceMap: true,
-    plugins: (loader) => [
-      require('autoprefixer')(),
-    ]
+    plugins: self.mode !== 'production'
+      ? loader => [ require('autoprefixer')() ]
+      : loader => [ require('autoprefixer')()]
   }
   
   return {
@@ -41,7 +41,8 @@ module.exports = function base (self) {
             plugins: [
               require.resolve('babel-plugin-import-glob'),
               require.resolve('@babel/plugin-proposal-class-properties'),
-              require.resolve('@babel/plugin-syntax-dynamic-import')
+              require.resolve('@babel/plugin-syntax-dynamic-import'),
+              require.resolve('@babel/plugin-transform-react-jsx')
             ]
           }
         },
