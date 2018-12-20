@@ -152,7 +152,7 @@ class Compiler extends Subject {
 			if (stats.hasErrors()) {
 
         this.logErrors(stats)
-        
+
 			} else {
         console.log(chalk.cyan(">> JS compilation completed in "+(stats.endTime - stats.startTime)+"ms"));
 				this.changed('js');
@@ -165,7 +165,7 @@ class Compiler extends Subject {
 			fileName = fileName.replace(this.themePath, '')
 			console.log(chalk.green(">> Detected changes: ") + chalk.magenta(fileName))
     })
-     
+
     const runWatch = () => {
       watching = compiler.watch({}, onEnd)
     }
@@ -208,7 +208,7 @@ class Compiler extends Subject {
         console.log(chalk.cyan(">> JS compilation completed in "+(stats.endTime - stats.startTime)+"ms"));
 			}
     })
-  
+
     compiler.run(() => {})
   }
 
@@ -246,7 +246,7 @@ class Compiler extends Subject {
 			this.emit('changed', change);
 		}, 300);
   }
-  
+
   logErrors(stats){
     const {errors, warnings} = formatWebpack(stats.toJson({}, true))
 
@@ -255,7 +255,7 @@ class Compiler extends Subject {
 
     const hasWarned = hasErrors || (hasWarnings && !this.silent)
 
-    if (hasErrors){      
+    if (hasErrors){
       console.log(chalk.bgRed.black(`\n${padStr("ERROR")}`))
       console.log(errors.join('\n\n'))
       console.log(chalk.bgRed(padStr()))
@@ -269,8 +269,8 @@ class Compiler extends Subject {
 
         console.log(chalk.bgYellow.black(padStr()))
       }
-    }  
-  
+    }
+
     return hasWarned
   }
 
