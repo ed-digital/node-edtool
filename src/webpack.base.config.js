@@ -1,17 +1,19 @@
-module.exports = function base (self) {
-  const path = require('path')
-  const MiniCssExtractPlugin = require("mini-css-extract-plugin")
+module.exports = function base(self) {
+  const path = require('path');
+  const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+  const VueLoaderPlugin = require('vue-loader/lib/plugin');
 
   const POST_CSS_OPTS = {
     ident: 'postcss',
     sourceMap: true,
-    plugins: self.mode !== 'production'
-      ? loader => [ require('autoprefixer')() ]
-      : loader => [ require('autoprefixer')()]
-  }
-  
+    plugins:
+      self.mode !== 'production'
+        ? loader => [require('autoprefixer')()]
+        : loader => [require('autoprefixer')()]
+  };
+
   return {
-    entry: self.assetPath+'/js/index.js',
+    entry: self.assetPath + '/js/index.js',
     output: {
       path: path.join(self.outputPath, '/js'),
       filename: 'bundle.js',
@@ -23,7 +25,7 @@ module.exports = function base (self) {
       rules: [
         {
           test: /\.js$/,
-          loader: require.resolve("babel-loader"),
+          loader: require.resolve('babel-loader'),
           options: {
             ignore: [/node_modules[\/|\\](?!gsap)/, /\.min\.js/],
             sourceMaps: true,
@@ -32,7 +34,7 @@ module.exports = function base (self) {
                 require.resolve('@babel/preset-env'),
                 {
                   targets: {
-                    browsers: ["last 10 versions", "ie > 10"]
+                    browsers: ['last 10 versions', 'ie > 10']
                   }
                 },
                 require.resolve('@babel/preset-react')
@@ -49,21 +51,43 @@ module.exports = function base (self) {
         {
           test: /\.less$/,
           use: [
-            { loader: MiniCssExtractPlugin.loader, },
-            { loader: require.resolve('css-loader'), options: {importLoaders: 2, sourceMap: true} },
-            { loader: require.resolve('postcss-loader'), options: POST_CSS_OPTS },
-            { loader: require.resolve('less-loader'), options: {sourceMap: true} }
+            { loader: MiniCssExtractPlugin.loader },
+            {
+              loader: require.resolve('css-loader'),
+              options: { importLoaders: 2, sourceMap: true }
+            },
+            {
+              loader: require.resolve('postcss-loader'),
+              options: POST_CSS_OPTS
+            },
+            {
+              loader: require.resolve('less-loader'),
+              options: { sourceMap: true }
+            }
           ]
         },
         {
           test: /\.(sa|sc|c)ss$/,
           use: [
             { loader: MiniCssExtractPlugin.loader },
-            { loader: require.resolve('css-loader'), options: {importLoaders: 2, sourceMap: true}},
-            { loader: require.resolve('postcss-loader'), options: POST_CSS_OPTS },
-            { loader: require.resolve('sass-loader'), options: {sourceMap: true}}
+            {
+              loader: require.resolve('css-loader'),
+              options: { importLoaders: 2, sourceMap: true }
+            },
+            {
+              loader: require.resolve('postcss-loader'),
+              options: POST_CSS_OPTS
+            },
+            {
+              loader: require.resolve('sass-loader'),
+              options: { sourceMap: true }
+            }
           ]
         },
+        {
+          test: /\.vue$/,
+          loader: require.resolve('vue-loader')
+        }
       ]
     },
     resolve: {
@@ -73,8 +97,9 @@ module.exports = function base (self) {
     },
     plugins: [
       new MiniCssExtractPlugin({
-        filename: '[name].bundle.css',
+        filename: '[name].bundle.css'
       }),
+      new VueLoaderPlugin()
     ]
-  }
-}
+  };
+};
