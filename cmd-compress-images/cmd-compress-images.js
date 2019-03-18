@@ -23,8 +23,8 @@ module.exports = async cmd => {
     outputPath,
     {
       plugins: [
-        imageminJpegtran({ quality: '80' }),
-        imageminPngquant({ quality: '80' })
+        imageminJpegtran({ quality: '60' }),
+        imageminPngquant({ quality: '60' })
       ]
     }
   )
@@ -32,30 +32,4 @@ module.exports = async cmd => {
   files.forEach(file => {
     console.log('Compressed', chalk.yellow(file.path.replace(outputPath + path.sep, '')))
   })
-
-  // compressImages(
-  //   ,
-  //   path.resolve(targetPath + '/built/'),
-  //   {
-  //     compress_force: false,
-  //     statistic: true,
-  //     autoupdate: false,
-  //   },
-  //   false,
-  //   { jpg: { engine: 'mozjpeg', command: ['-quality', '60'] } },
-  //   { png: { engine: 'pngquant', command: ['--quality=20-50'] } },
-  //   { svg: { engine: 'svgo', command: '--multipass' } },
-  //   { gif: { engine: 'gifsicle', command: ['--colors', '64', '--use-col=web'] } },
-  //   (err, done, stats) => {
-  //     console.log(stats)
-  //     console.log(err)
-  //     if (done) {
-  //       console.log("Done")
-  //     }
-
-  //     if (err) {
-  //       console.log(err)
-  //     }
-  //   }
-  // )
 }

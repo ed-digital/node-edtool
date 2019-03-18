@@ -62,7 +62,9 @@ module.exports = function base(self) {
             },
             {
               loader: require.resolve('less-loader'),
-              options: { sourceMap: true }
+              options: {
+                sourceMap: true
+              }
             }
           ]
         },
