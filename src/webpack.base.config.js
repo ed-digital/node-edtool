@@ -1,5 +1,6 @@
 module.exports = function base(self) {
   const path = require('path');
+  const fs = require('fs');
   const MiniCssExtractPlugin = require('mini-css-extract-plugin');
   const VueLoaderPlugin = require('vue-loader/lib/plugin');
 
@@ -12,11 +13,18 @@ module.exports = function base(self) {
         : loader => [require('autoprefixer')()]
   };
 
+  const entry = { bundle: self.assetPath + '/js/index.js' };
+  const adminPath = path.resolve(self.assetPath + '/js/admin.js');
+
+  if (fs.existsSync(adminPath)) {
+    entry.admin = adminPath;
+  }
+
   return {
-    entry: self.assetPath + '/js/index.js',
+    entry,
     output: {
       path: path.join(self.outputPath, '/js'),
-      filename: 'bundle.js',
+      filename: '[name].js',
       publicPath: path.join(self.outputPath, '/js/').replace(self.siteRoot, '')
     },
     devtool: 'source-map',
