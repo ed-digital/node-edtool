@@ -146,12 +146,14 @@ class Compiler extends Subject {
     const self = this
 
     if (this.mode === DEV) {
-      const watcher = gulpWatch(
-        [
-          this.themePath + '/**/*.css',
-          this.themePath + '/**/*.scss',
-          this.themePath + '/**/*.sass',
-        ],
+      const p = [
+        path.join(this.themePath + '/**/*.css'),
+        path.join(this.themePath + '/**/*.scss'),
+        path.join(this.themePath + '/**/*.sass'),
+      ]
+      console.log(p)
+      gulpWatch(
+        p,
         {
           ignored: /node_modules|dist|assets-built/,
         },
