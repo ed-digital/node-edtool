@@ -28,7 +28,7 @@ const commands = {
         const Compiler = require('../src/compiler')
         const compiler = new Compiler({
           ...cmd.opts,
-          mode: 'development'
+          mode: 'development',
         })
 
         refreshServer.start()
@@ -38,12 +38,12 @@ const commands = {
           refreshServer.triggerRefresh(type)
         })
       }
-    }
+    },
   },
   create: {
     description: 'Downloads the ED WP theme starter kit',
     usage: ['create', 'create <name> (Tries to name theme)'],
-    run: opts => starterTheme(opts)
+    run: opts => starterTheme(opts),
   },
   prod: {
     description: 'Build all theme JS and CSS for production.',
@@ -57,30 +57,30 @@ const commands = {
         const Compiler = require('../src/compiler')
         const compiler = new Compiler({
           ...opts.opts,
-          mode: 'production'
+          mode: 'production',
         })
 
         compiler.compile()
       }
-    }
+    },
   },
   help: {
     description: 'Show help',
     alias: ['?'],
     usage: ['help', 'help <cmd> (for specific command)'],
-    run: argv => showHelp(argv.args[0])
+    run: argv => showHelp(argv.args[0]),
   },
   version: {
     description: 'Shows edwp version',
     alias: ['v'],
     usage: ['version', 'v', '-v'],
-    run: showVersion
+    run: showVersion,
   },
   ngrok: {
     description: 'Creates an ngrok tunnel to your local site',
     alias: [],
     usage: ['ngrok site.local'],
-    run: (...args) => require('../cmd-ngrok/cmd-ngrok')(...args)
+    run: (...args) => require('../cmd-ngrok/cmd-ngrok')(...args),
   },
   // 'go': {
   //   description: 'Creates an ngrok tunnel to your local site',
@@ -92,27 +92,27 @@ const commands = {
     description: 'Creates an http proxy to your local site',
     alias: [],
     usage: ['proxy site.local', 'proxy site'],
-    run: (...args) => require('../cmd-proxy/cmd-proxy')(...args)
+    run: (...args) => require('../cmd-proxy/cmd-proxy')(...args),
   },
   'compress-images': {
     description: 'Compresses images in a path',
     alias: [],
     usage: ['compress-images <path>', 'compress-images (default cwd)'],
     run: (...args) =>
-      require('../cmd-compress-images/cmd-compress-images')(...args)
+      require('../cmd-compress-images/cmd-compress-images')(...args),
   },
   tail: {
     description: 'Tail a log file to console',
     alias: [],
     usage: ['tail <path>'],
-    run: (...args) => require('../cmd-tail/cmd-tail')(...args)
+    run: (...args) => require('../cmd-tail/cmd-tail')(...args),
   },
   lorem: {
     description: 'Get some lorem ipsum',
     alias: ['l'],
     usage: ['lorem w10', 'lorem s3', 'lorem p2'],
-    run: (...args) => require('../cmd-lorem/cmd-lorem')(...args)
-  }
+    run: (...args) => require('../cmd-lorem/cmd-lorem')(...args),
+  },
 }
 
 function showVersion() {
@@ -176,7 +176,7 @@ const [cmdName, ...args] = _
 const cmdOpts = {
   name: cmdName,
   args: args,
-  opts: transformOpts(opts)
+  opts: transformOpts(opts),
 }
 
 // Attempting to run the given command
@@ -225,6 +225,6 @@ function transformOpts(opts) {
     version: opts.v || opts.version,
     silent: opts.s || opts.silent,
     port: opts.p || opts.port,
-    analyze: opts.a || opts.analyze
+    analyze: opts.a || opts.analyze,
   }
 }
