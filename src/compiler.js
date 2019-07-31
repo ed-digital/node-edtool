@@ -151,7 +151,6 @@ class Compiler extends Subject {
         path.join(this.themePath + '/**/*.scss'),
         path.join(this.themePath + '/**/*.sass'),
       ]
-      console.log(p)
       gulpWatch(
         p,
         {
