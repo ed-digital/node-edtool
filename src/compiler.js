@@ -111,7 +111,7 @@ class Compiler extends Subject {
         .pipe(autoprefixer())
 
       // Optionally minify css if in production mode
-      if (this.mode === PROD) plumbing.pipe(cssnano())
+      if (this.mode === PROD) plumbing.pipe(cssnano({zindex: false}))
 
       plumbing
         .pipe(sourcemaps.write('.'))
@@ -150,6 +150,7 @@ class Compiler extends Subject {
         path.join(this.themePath + '/**/*.css'),
         path.join(this.themePath + '/**/*.scss'),
         path.join(this.themePath + '/**/*.sass'),
+        path.join(this.themePath + '/**/*.less'),
       ]
       gulpWatch(
         p,
