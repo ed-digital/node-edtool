@@ -10,6 +10,13 @@ const fs = require('fs')
 const getFlywheelPath = require('../util/local/get-flywheel-path')
 const path = require('path')
 
+function getKey (obj, keys, def  = undefined) {
+  for (const key of keys) {
+    if (obj[key]) return obj[key]
+  }
+  return def
+}
+
 module.exports = async cmd => {
   const identifier = cmd.args[0]
 
@@ -17,13 +24,10 @@ module.exports = async cmd => {
 
   console.log(os.networkInterfaces())
 
-  const localNetworkIp = os
-    .networkInterfaces()
-    ['WiFi'].find(network => network.family === 'IPv4').address
+  const localNetworkIp = getKey(os.networkInterfaces(), ['WiFi', 'en1'])
+  .find(network => network.family === 'IPv4').address
 
   const site = identifier ? getLocalByProp(identifier) : getLocalByCurrent()
-
-  console.log(site)
 
   const siteInfo = {
     network: `${site.machineIP}:${site.ports.HTTPS}`,
