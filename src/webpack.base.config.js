@@ -49,7 +49,7 @@ module.exports = function base(self) {
               ],
             ],
             plugins: [
-              require.resolve('babel-plugin-import-glob'),
+              // require.resolve('babel-plugin-import-glob'),
               require.resolve('@babel/plugin-proposal-class-properties'),
               require.resolve('@babel/plugin-syntax-dynamic-import'),
               require.resolve('@babel/plugin-transform-react-jsx'),
@@ -98,6 +98,21 @@ module.exports = function base(self) {
           test: /\.vue$/,
           loader: require.resolve('vue-loader'),
         },
+        {
+          test: /\.(glsl|frag|vert)$/,
+          exclude: /node_modules/,
+          use: [
+            require.resolve('raw-loader'),
+            {
+              loader: require.resolve('glslify-loader'),
+              options: {
+                transform: [
+                  
+                ]
+              }
+            }
+          ]
+        }
       ],
     },
     resolve: {
