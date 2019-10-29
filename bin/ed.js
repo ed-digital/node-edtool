@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+console.log('Started')
 const C = require('chalk')
 const log = console.log
 

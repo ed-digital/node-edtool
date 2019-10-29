@@ -156,6 +156,7 @@ class Compiler extends Subject {
         p,
         {
           ignored: /node_modules|dist|assets-built/,
+          cwd: process.cwd()
         },
         function() {
           console.log(

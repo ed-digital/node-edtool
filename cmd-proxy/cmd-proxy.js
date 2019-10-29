@@ -1,4 +1,11 @@
 
+function getKey (obj, keys, def  = undefined) {
+  for (const key of keys) {
+    if (obj[key]) return obj[key]
+  }
+  return def
+}
+
 module.exports = async cmd => {
   const getLocalByCurrent = require('../util/local/get-local-current')
   const getLocalByProp = require('../util/local/get-local-by-props')
@@ -17,13 +24,10 @@ module.exports = async cmd => {
 
   console.log(os.networkInterfaces())
 
-  const localNetworkIp = os
-    .networkInterfaces()
-    ['WiFi'].find(network => network.family === 'IPv4').address
+  const localNetworkIp = getKey(os.networkInterfaces(), ['WiFi', 'en1'])
+  .find(network => network.family === 'IPv4').address
 
   const site = identifier ? getLocalByProp(identifier) : getLocalByCurrent()
-
-  console.log(site)
 
   const siteInfo = {
     network: `${site.machineIP}:${site.ports.HTTPS}`,

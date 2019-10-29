@@ -2,22 +2,24 @@ const path = require('path')
 const fs = require('fs')
 
 module.exports = () => {
-  const appdata = process.env.APPDATA
-    || (
-      process.platform == 'darwin'
-        ? process.env.HOME + 'Library/Preferences'
-        : '/var/local'
-    )
 
-  if (process.platform !== 'win32') {
-    console.warn('Only windows is supported at the moment')
-    return
+  let appFolder
+
+  if (process.env.APPDATA) {
+    /* Windows */
+    appFolder = process.env.APPDATA
+  } else if (process.platform === 'darwin') {
+    /* Mac */
+    appFolder = process.env.HOME + '/Library/Application Support'
+  } else {
+    /* Linux I assume */
+    appFolder = '/var/local'
   }
 
-  const flywheelPath = path.resolve(appdata + '/Local By Flywheel')
+  const flywheelPath = path.resolve(appFolder + '/Local By Flywheel')
 
   if (!fs.existsSync(flywheelPath)) {
-    console.warn(`Couldnt find your flywheel path in ${flywheelPath}`)
+    console.warn(`Couldnt find your flywheel path in ${flywheelPath} please report to bryn@ed.com.au`)
     process.exit()
     return
   }
