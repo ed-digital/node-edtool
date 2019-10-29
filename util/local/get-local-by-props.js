@@ -2,13 +2,12 @@ const path = require('path')
 const fs = require('fs')
 const read = require('../misc/read')
 
-module.exports = (val) => {
-  const appdata = process.env.APPDATA
-    || (
-      process.platform == 'darwin'
-        ? process.env.HOME + 'Library/Preferences'
-        : '/var/local'
-    )
+module.exports = val => {
+  const appdata =
+    process.env.APPDATA ||
+    (process.platform == 'darwin'
+      ? process.env.HOME + 'Library/Preferences'
+      : '/var/local')
 
   if (process.platform !== 'win32') {
     console.warn('Only windows is supported at the moment')
@@ -22,21 +21,19 @@ module.exports = (val) => {
     return
   }
 
-
-  const machineIP = read(`${flywheelPath}/machine-ip.json`);
+  const machineIP = read(`${flywheelPath}/machine-ip.json`)
   const sites = Object.values(require(`${flywheelPath}/sites.json`))
 
-  const site = sites.find(
-    site => Object.values(site).some(
-      siteVal => siteVal === val
-    )
+  console.log(sites, val)
+
+  const site = sites.find(site =>
+    Object.values(site).some(siteVal => String(siteVal).toLowerCase() === val)
   )
 
   site.path = site.path.replace('~', process.env.HOME)
 
   return {
     ...site,
-    machineIP
+    machineIP,
   }
 }
-

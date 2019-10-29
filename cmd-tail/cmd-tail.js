@@ -1,14 +1,11 @@
-const {Tail} = require('tail')
-const path = require('path')
-const chalk = require('chalk')
-const readline = require('readline')
-
-
-
-module.exports = function cmdTail (cmd) {
+module.exports = function cmdTail(cmd) {
+  const { Tail } = require('tail')
+  const path = require('path')
+  const chalk = require('chalk')
+  const readline = require('readline')
   // Make process.stdin emit key events
-  readline.emitKeypressEvents(process.stdin);
-  process.stdin.setRawMode(true);
+  readline.emitKeypressEvents(process.stdin)
+  process.stdin.setRawMode(true)
 
   const logStart = () => {
     process.stdout.write('\033c')
@@ -16,14 +13,11 @@ module.exports = function cmdTail (cmd) {
   }
 
   // Listen for the clear key
-  process.stdin.on(
-    'keypress', 
-    (_, key) => {
-      if (key.name !== 'c') return
-      if (key.ctrl) process.exit()
-      logStart()
-    }
-  );
+  process.stdin.on('keypress', (_, key) => {
+    if (key.name !== 'c') return
+    if (key.ctrl) process.exit()
+    logStart()
+  })
 
   let filePath = cmd.args[0]
 
@@ -38,5 +32,5 @@ module.exports = function cmdTail (cmd) {
   logStart()
   const tail = new Tail(path.resolve(filePath))
   tail.on('line', console.log)
-  tail.on('error', err => console.log("ERROR", err))
+  tail.on('error', err => console.log('ERROR', err))
 }

@@ -1,16 +1,16 @@
-const getLocalByCurrent = require('../util/local/get-local-current')
-const getLocalByProp = require('../util/local/get-local-by-props')
-const getPort = require('./get-port')
-const os = require('os')
-const clipboard = require('clipboardy')
-const chalk = require('chalk')
-const express = require('express')
-const proxy = require('express-http-proxy')
-const fs = require('fs')
-const getFlywheelPath = require('../util/local/get-flywheel-path')
-const path = require('path')
 
 module.exports = async cmd => {
+  const getLocalByCurrent = require('../util/local/get-local-current')
+  const getLocalByProp = require('../util/local/get-local-by-props')
+  const getPort = require('./get-port')
+  const os = require('os')
+  const clipboard = require('clipboardy')
+  const chalk = require('chalk')
+  const express = require('express')
+  const proxy = require('express-http-proxy')
+  const fs = require('fs')
+  const getFlywheelPath = require('../util/local/get-flywheel-path')
+  const path = require('path')
   const identifier = cmd.args[0]
 
   port = await getPort(cmd.opts.port ? Number(cmd.opts.port) : 80)

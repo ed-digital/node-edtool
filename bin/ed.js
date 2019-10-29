@@ -113,6 +113,12 @@ const commands = {
     usage: ['lorem w10', 'lorem s3', 'lorem p2'],
     run: (...args) => require('../cmd-lorem/cmd-lorem')(...args),
   },
+  edit: {
+    description: 'Edit the edtool',
+    alias: [],
+    usage: ['edit'],
+    run: () => require('../cmd-edit/cmd-edit')(...args),
+  },
 }
 
 function showVersion() {
