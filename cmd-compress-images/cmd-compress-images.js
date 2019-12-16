@@ -9,7 +9,9 @@ const fs = require('fs')
 
 module.exports = async cmd => {
   if (!cmd.args[0]) {
-    console.warn('You did not supply a path, compressing images in current working directory')
+    console.warn(
+      'You did not supply a path, compressing images in current working directory'
+    )
   }
   const targetPath = path.resolve(cmd.args[0] ? cmd.args[0] : process.cwd())
   const outputPath = path.resolve(targetPath + '/built/')
@@ -24,12 +26,15 @@ module.exports = async cmd => {
     {
       plugins: [
         imageminJpegtran({ quality: '60' }),
-        imageminPngquant({ quality: '60' })
-      ]
+        imageminPngquant({ quality: [0.6, 0.8] }),
+      ],
     }
   )
 
   files.forEach(file => {
-    console.log('Compressed', chalk.yellow(file.path.replace(outputPath + path.sep, '')))
+    console.log(
+      'Compressed',
+      chalk.yellow(file.path.replace(outputPath + path.sep, ''))
+    )
   })
 }
