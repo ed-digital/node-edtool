@@ -1,0 +1,11 @@
+{
+  "command": "latest",
+  "build": "latest",
+  "compress-images": "latest",
+  "create": "latest",
+  "development": "latest",
+  "edit": "latest",
+  "go": "latest",
+  "lorem": "latest",
+  "ngrok": "latest"
+}

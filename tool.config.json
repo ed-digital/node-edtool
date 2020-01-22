@@ -1,0 +1,7 @@
+{
+  "tool": {
+    "name": "ed",
+    "version": "1.0.0",
+    "supports": ">=1.0.0"
+  }
+}

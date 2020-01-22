@@ -1,0 +1,48 @@
+{
+  "name": "commands",
+  "title": "\n
+   __________\n
+  /           \
+ /     ________|
+|     |       
+",
+
+  "description": {
+    "short": "Manage installed commands",
+    "long": "Manage installed commands and stuff"
+  },
+
+  "release": {
+    "version": "1.0.0",
+    "description": "Initial release"
+  },
+
+  "scripts": {
+    "install": false,
+    "postInstall": false
+  },
+
+  "command": {
+    "alias": "help command"
+  },
+
+  "sub_commands": {
+    "install": {
+      "options": [],
+      "args": [{ "name": "cmd", "type": "string" }],
+      "run": "./install-command"
+    },
+    "link": {
+      "options": [],
+      "args": [{ "name": "directory", "type": "string" }],
+      "run": ""
+    },
+    "remove": {
+      "options": [],
+      "args": [{ "name": "cmd", "type": "string" }]
+    },
+    "help": {
+      "alias": "help command"
+    }
+  }
+}
